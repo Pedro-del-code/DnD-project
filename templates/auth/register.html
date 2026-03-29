@@ -136,7 +136,18 @@
     if (pass.length < 6)  return showToast('Senha mínima 6 caracteres', 'error');
 
     firebase.auth().createUserWithEmailAndPassword(email, pass)
-      .then(cred => cred.user.updateProfile({ displayName: name }))
+      .then(cred => {
+        const user = cred.user;
+        return user.updateProfile({ displayName: name }).then(() => {
+          // Cria documento no Firestore com ficha_ativa: false
+          return firebase.firestore().collection('usuarios').doc(user.uid).set({
+            nome: name,
+            email: email,
+            ficha_ativa: false,
+            criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        });
+      })
       .then(salvarSessao)
       .catch(e => showToast(e.message, 'error'));
   }

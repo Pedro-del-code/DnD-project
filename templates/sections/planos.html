@@ -282,6 +282,22 @@
   .btn-copy:hover { background: rgba(201,168,76,0.1); }
   .btn-copy.copied { background: rgba(201,168,76,0.15); color: var(--gold-light); border-color: var(--gold); }
 
+  .btn-email {
+    background: transparent;
+    border: 1px solid rgba(201,168,76,0.3);
+    color: var(--text-dim);
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    padding: 0.55rem 1.25rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    width: 100%;
+    margin-top: 0.75rem;
+  }
+  .btn-email:hover { background: rgba(201,168,76,0.06); color: var(--gold-dark); }
+
   .pix-aviso {
     margin-top: 1.25rem;
     padding: 0.75rem 1rem;
@@ -372,6 +388,9 @@
       <div class="pix-aviso">
         Após o pagamento, envie o comprovante para liberação do acesso. O acesso será ativado em até 24h.
       </div>
+      <button class="btn-email" id="btn-email" onclick="abrirEmail()">
+        📧 ENVIAR COMPROVANTE POR EMAIL
+      </button>
     </div>
 
   </div>
@@ -421,6 +440,21 @@ function selecionarPlano(id) {
   const section = document.getElementById('pix-section');
   section.classList.add('show');
   section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function abrirEmail() {
+  if (!planoAtual) return;
+  const assunto = encodeURIComponent('Comprovante de Pagamento — Legend of D&D');
+  const corpo = encodeURIComponent(
+    'Olá! Segue o comprovante de pagamento do plano ' + planoAtual.titulo + '.
+
+' +
+    'Meu email de cadastro no site: [SEU EMAIL AQUI]
+
+' +
+    '[ANEXE O COMPROVANTE AQUI]'
+  );
+  window.location.href = 'mailto:legendofdnd.suporte@gmail.com?subject=' + assunto + '&body=' + corpo;
 }
 
 function copiarPix() {

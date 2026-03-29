@@ -5,81 +5,83 @@
 {% block extra_head %}
 <style>
   .ficha-layout {
-    display: grid;
-    grid-template-columns: 320px 1fr;
-    gap: 1.5rem;
-    padding: 1.5rem 2rem;
+    display: grid; grid-template-columns: 320px 1fr;
+    gap: 1.5rem; padding: 1.5rem 2rem;
     max-width: 1200px; margin: 0 auto;
   }
-
   .panel-left { display: flex; flex-direction: column; gap: 1rem; }
 
   .ficha-result {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    min-height: 400px;
-    padding: 1.5rem;
-    position: relative;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; min-height: 400px; padding: 1.5rem; position: relative;
   }
 
-  .ficha-result.loading::after {
-    content: 'Gerando personagem...';
-    position: absolute; inset: 0;
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Cinzel', serif; color: var(--gold);
-    font-size: 0.9rem; letter-spacing: 0.1em;
-    background: rgba(10,8,4,0.8);
-    border-radius: 10px;
+  .spinner {
+    display: none; position: absolute; inset: 0;
+    align-items: center; justify-content: center; flex-direction: column; gap: 1rem;
+    background: rgba(10,8,4,0.88); border-radius: 10px; z-index: 2;
   }
+  .spinner.show { display: flex; }
+  .spinner-ring {
+    width: 48px; height: 48px; border: 3px solid var(--border);
+    border-top-color: var(--gold); border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner p {
+    font-family: 'Cinzel', serif; color: var(--gold);
+    font-size: 0.85rem; letter-spacing: 0.1em;
+    animation: pulse 1.5s ease infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:0.5} 50%{opacity:1} }
 
   .ficha-block { margin-bottom: 1.25rem; }
   .ficha-block h4 {
     font-family: 'Cinzel', serif; font-size: 0.75rem;
     color: var(--gold-dark); letter-spacing: 0.12em;
     text-transform: uppercase; margin-bottom: 0.5rem;
-    padding-bottom: 0.35rem;
-    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.35rem; border-bottom: 1px solid var(--border);
   }
   .ficha-block p { font-size: 0.95rem; color: var(--text-parch); line-height: 1.6; }
 
-  .attrs-grid {
-    display: grid; grid-template-columns: repeat(3,1fr); gap: 0.5rem;
-    margin-top: 0.5rem;
-  }
+  .attrs-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 0.5rem; margin-top: 0.5rem; }
   .attr-box {
-    background: rgba(201,168,76,0.06);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    text-align: center; padding: 0.5rem;
+    background: rgba(201,168,76,0.06); border: 1px solid var(--border);
+    border-radius: 6px; text-align: center; padding: 0.5rem;
   }
-  .attr-box .val {
-    font-family: 'Cinzel', serif; font-size: 1.2rem;
-    color: var(--gold); font-weight: 900;
+  .attr-box .val { font-family: 'Cinzel', serif; font-size: 1.25rem; color: var(--gold); font-weight: 900; }
+  .attr-box .mod { font-size: 0.72rem; color: var(--text-dim); }
+  .attr-box .lbl { font-family: 'Cinzel', serif; font-size: 0.6rem; color: var(--text-dim); letter-spacing: 0.1em; }
+
+  .combat-row { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.5rem; }
+  .combat-chip {
+    background: rgba(201,168,76,0.05); border: 1px solid var(--border);
+    border-radius: 6px; padding: 0.5rem 0.85rem; text-align: center;
   }
-  .attr-box .lbl {
-    font-family: 'Cinzel', serif; font-size: 0.62rem;
-    color: var(--text-dim); letter-spacing: 0.1em;
+  .combat-chip .cv { font-family: 'Cinzel', serif; font-size: 1.1rem; color: var(--gold); font-weight: 700; }
+  .combat-chip .cl { font-size: 0.68rem; color: var(--text-dim); font-family: 'Cinzel', serif; letter-spacing: 0.08em; }
+
+  .tag-list { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; }
+  .tag-item {
+    font-size: 0.78rem; background: rgba(201,168,76,0.06);
+    border: 1px solid var(--border); border-radius: 4px;
+    padding: 0.2rem 0.55rem; color: var(--text-parch);
   }
 
   .empty-state {
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
-    height: 300px;
-    color: var(--text-dim); text-align: center;
+    height: 300px; color: var(--text-dim); text-align: center;
   }
   .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
-  .empty-state p { font-style: italic; font-size: 0.9rem; }
 
   select { color: var(--text-parch) !important; }
   select option { background: #1a1206; }
 
-  .save-row { display: flex; gap: 0.75rem; margin-top: 1rem; }
-  .save-row .btn-outline, .save-row .btn-gold { flex: 1; font-size: 0.78rem; padding: 0.6rem; }
+  .save-row { display: flex; gap: 0.75rem; }
+  .save-row button { flex: 1; font-size: 0.78rem; padding: 0.6rem; }
 
-  @media (max-width: 768px) {
-    .ficha-layout { grid-template-columns: 1fr; padding: 1rem; }
-  }
+  @media (max-width: 768px) { .ficha-layout { grid-template-columns: 1fr; padding: 1rem; } }
 </style>
 {% endblock %}
 
@@ -87,19 +89,21 @@
 <div class="page">
   <div class="section-header">
     <h1>📜 Auto Ficha</h1>
-    <p>Gere personagens D&D 5e completos com inteligência artificial</p>
+    <p>Gere personagens D&D 5e — dados reais do Livro do Jogador PT-BR</p>
   </div>
 
   <div class="ficha-layout">
-    <!-- Form Panel -->
     <div class="panel-left">
       <div class="card">
         <div class="form-group">
           <label>RAÇA</label>
           <select id="raca">
             <option value="">Aleatória</option>
-            <option>Humano</option><option>Elfo</option><option>Anão</option>
-            <option>Halfling</option><option>Draconato</option><option>Gnomo</option>
+            <option>Anão da Colina</option><option>Anão da Montanha</option>
+            <option>Alto Elfo</option><option>Elfo da Floresta</option><option>Drow</option>
+            <option>Halfling Pés-Leves</option><option>Halfling Robusto</option>
+            <option>Humano</option><option>Draconato</option>
+            <option>Gnomo das Rochas</option><option>Gnomo da Floresta</option>
             <option>Meio-Elfo</option><option>Meio-Orc</option><option>Tiefling</option>
           </select>
         </div>
@@ -107,10 +111,10 @@
           <label>CLASSE</label>
           <select id="classe">
             <option value="">Aleatória</option>
-            <option>Bárbaro</option><option>Bardo</option><option>Clérigo</option>
-            <option>Druida</option><option>Guerreiro</option><option>Ladino</option>
-            <option>Mago</option><option>Monge</option><option>Paladino</option>
-            <option>Patrulheiro</option><option>Feiticeiro</option><option>Bruxo</option>
+            <option>Bárbaro</option><option>Bardo</option><option>Bruxo</option>
+            <option>Clérigo</option><option>Druida</option><option>Feiticeiro</option>
+            <option>Guerreiro</option><option>Ladino</option><option>Mago</option>
+            <option>Monge</option><option>Paladino</option><option>Patrulheiro</option>
           </select>
         </div>
         <div class="form-group">
@@ -134,21 +138,21 @@
           <label>CONCEITO (OPCIONAL)</label>
           <input type="text" id="conceito" placeholder="Ex: elfo exilado que busca vingança..." />
         </div>
-        <button class="btn-gold" onclick="gerarFicha()">⚔ GERAR PERSONAGEM</button>
+        <button class="btn-gold" onclick="gerarFicha()" style="width:100%">⚔ GERAR PERSONAGEM</button>
       </div>
-
-      <div class="save-row" id="save-row" style="display:none!important">
+      <div class="save-row" id="save-row" style="display:none">
         <button class="btn-outline" onclick="copiarFicha()">📋 Copiar</button>
         <button class="btn-gold" onclick="salvarFicha()">💾 Salvar</button>
       </div>
     </div>
 
-    <!-- Result Panel -->
     <div class="ficha-result" id="ficha-result">
-      <div class="empty-state">
+      <div class="spinner" id="spinner"><div class="spinner-ring"></div><p>CONSULTANDO OS PERGAMINHOS...</p></div>
+      <div class="empty-state" id="empty-state">
         <div class="icon">🎲</div>
         <p>Configure os parâmetros e clique em<br><strong>Gerar Personagem</strong></p>
       </div>
+      <div id="ficha-content" style="display:none"></div>
     </div>
   </div>
 </div>
@@ -156,121 +160,241 @@
 
 {% block extra_scripts %}
 <script>
-  let fichaAtual = null;
+// ── Dados reais do Livro do Jogador D&D 5e PT-BR ──────────────
+const CLASSES = {
+  'Bárbaro':    { dado:12, armor:'Leves, médias, escudos', weapons:'Simples, marciais', caster:false },
+  'Bardo':      { dado:8,  armor:'Leves', weapons:'Simples, bestas de mão, espadas longas, rapieiras, espadas curtas', caster:true },
+  'Bruxo':      { dado:8,  armor:'Leves', weapons:'Simples', caster:true },
+  'Clérigo':    { dado:8,  armor:'Leves, médias, escudos', weapons:'Todas as simples', caster:true },
+  'Druida':     { dado:8,  armor:'Leves, médias, escudos (não metálicos)', weapons:'Clavas, adagas, dardos, foices, bordões', caster:true },
+  'Feiticeiro': { dado:6,  armor:'Nenhuma', weapons:'Adagas, dardos, fundas, bordões, bestas leves', caster:true },
+  'Guerreiro':  { dado:10, armor:'Todas, escudos', weapons:'Simples, marciais', caster:false },
+  'Ladino':     { dado:8,  armor:'Leves', weapons:'Simples, bestas de mão, espadas longas, rapieiras, espadas curtas', caster:false },
+  'Mago':       { dado:6,  armor:'Nenhuma', weapons:'Adagas, dardos, fundas, bordões, bestas leves', caster:true },
+  'Monge':      { dado:8,  armor:'Nenhuma', weapons:'Simples, espadas curtas', caster:false },
+  'Paladino':   { dado:10, armor:'Todas, escudos', weapons:'Simples, marciais', caster:true },
+  'Patrulheiro':{ dado:10, armor:'Leves, médias, escudos', weapons:'Simples, marciais', caster:true },
+};
 
-  firebase.auth().onAuthStateChanged(u => { if (!u) window.location.href = '/login'; });
+const RACIAL_BONUS = {
+  'Anão da Colina':     {CON:2,SAB:1},
+  'Anão da Montanha':   {CON:2,FOR:2},
+  'Alto Elfo':          {DES:2,INT:1},
+  'Elfo da Floresta':   {DES:2,SAB:1},
+  'Drow':               {DES:2,CAR:1},
+  'Halfling Pés-Leves': {DES:2,CAR:1},
+  'Halfling Robusto':   {DES:2,CON:1},
+  'Humano':             {FOR:1,DES:1,CON:1,INT:1,SAB:1,CAR:1},
+  'Draconato':          {FOR:2,CAR:1},
+  'Gnomo das Rochas':   {INT:2,CON:1},
+  'Gnomo da Floresta':  {INT:2,DES:1},
+  'Meio-Elfo':          {CAR:2,DES:1,SAB:1},
+  'Meio-Orc':           {FOR:2,CON:1},
+  'Tiefling':           {INT:1,CAR:2},
+};
 
-  async function gerarFicha() {
-    const raca      = document.getElementById('raca').value || 'aleatória';
-    const classe    = document.getElementById('classe').value || 'aleatória';
-    const nivel     = document.getElementById('nivel').value;
-    const tend      = document.getElementById('tendencia').value || 'qualquer';
-    const conceito  = document.getElementById('conceito').value;
+const PROF_BONUS = {1:2,2:2,3:2,4:2,5:3,6:3,7:3,8:3,9:4,10:4,11:4,12:4,13:5,14:5,15:5,16:5,17:6,18:6,19:6,20:6};
 
-    const box = document.getElementById('ficha-result');
-    box.classList.add('loading');
-    box.innerHTML = '';
+function mod(v) { return Math.floor((v-10)/2); }
+function modStr(v) { const m=mod(v); return (m>=0?'+':'')+m; }
 
-    const prompt = `Crie uma ficha de personagem D&D 5e completa em PT-BR com:
-Raça: ${raca} | Classe: ${classe} | Nível: ${nivel} | Tendência: ${tend}
-${conceito ? 'Conceito: ' + conceito : ''}
+function calcPV(cls, nivel, modCON) {
+  const c = CLASSES[cls]; if (!c) return 0;
+  const med = Math.ceil((c.dado+1)/2);
+  return c.dado + modCON + (nivel-1)*(med+modCON);
+}
 
-Responda APENAS em JSON válido com esta estrutura:
+function calcCA(cls, attrs) {
+  const armor = (CLASSES[cls]||{}).armor||'';
+  if (armor === 'Nenhuma') {
+    if (cls === 'Monge') return 10 + mod(attrs.DES) + mod(attrs.SAB);
+    return 10 + mod(attrs.DES);
+  }
+  if (armor.includes('médias')) return 14 + Math.min(mod(attrs.DES), 2);
+  if (armor.includes('Leves')) return 11 + mod(attrs.DES);
+  return 16;
+}
+
+let fichaAtual = null;
+firebase.auth().onAuthStateChanged(u => { if (!u) window.location.href = '/login'; });
+
+async function gerarFicha() {
+  const raca    = document.getElementById('raca').value;
+  const classe  = document.getElementById('classe').value;
+  const nivel   = parseInt(document.getElementById('nivel').value);
+  const tend    = document.getElementById('tendencia').value || 'qualquer';
+  const conc    = document.getElementById('conceito').value;
+
+  document.getElementById('spinner').classList.add('show');
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('ficha-content').style.display = 'none';
+  document.getElementById('save-row').style.display = 'none';
+
+  const profB = PROF_BONUS[nivel] || 2;
+  const classeInfo = classe ? CLASSES[classe] : null;
+
+  const prompt = `Você é um gerador de fichas D&D 5e PT-BR usando o Livro do Jogador oficial.
+
+PARÂMETROS:
+- Raça: ${raca || 'escolha entre: Anão da Colina, Anão da Montanha, Alto Elfo, Elfo da Floresta, Drow, Halfling Pés-Leves, Halfling Robusto, Humano, Draconato, Gnomo das Rochas, Gnomo da Floresta, Meio-Elfo, Meio-Orc, Tiefling'}
+- Classe: ${classe || 'escolha entre: Bárbaro, Bardo, Bruxo, Clérigo, Druida, Feiticeiro, Guerreiro, Ladino, Mago, Monge, Paladino, Patrulheiro'}
+- Nível: ${nivel}
+- Tendência: ${tend}
+- Conceito: ${conc || 'livre'}
+
+REGRAS (Livro do Jogador PT-BR):
+- Atributos base: simule 4d6 descartando menor (valores realistas entre 8-17)
+- NÃO aplique bônus raciais nos atributos — o código fará isso
+- Bônus de proficiência neste nível: +${profB}
+- Perícias: escolha as corretas da lista da classe no livro
+- Características: liste as características de classe para o nível ${nivel} (ex: Fúria para Bárbaro, Ataque Extra no nível 5, etc.)
+- Magias: só liste se for conjurador (Bardo, Bruxo, Clérigo, Druida, Feiticeiro, Mago, Paladino, Patrulheiro)
+- Equipamento inicial compatível com classe
+
+Responda APENAS JSON puro, sem markdown:
 {
-  "nome": "Nome do Personagem",
-  "raca": "Raça",
-  "classe": "Classe",
+  "nome": "nome épico PT-BR",
+  "raca": "raça exata da lista",
+  "classe": "classe exata",
   "nivel": ${nivel},
-  "tendencia": "Tendência",
+  "tendencia": "tendência",
+  "antecedente": "nome do antecedente (Soldado, Criminoso, Nobre, Forasteiro, etc.)",
   "atributos": {"FOR":0,"DES":0,"CON":0,"INT":0,"SAB":0,"CAR":0},
-  "pv": 0,
-  "ca": 0,
-  "iniciativa": 0,
-  "habilidades": ["lista de habilidades e proficiências"],
-  "equipamento": ["lista de equipamentos"],
-  "magias": ["lista de magias se aplicável, senão vazio"],
-  "historia": "Backstory de 2-3 frases",
-  "personalidade": "Traços de personalidade",
-  "objetivo": "Ideal e objetivo do personagem"
+  "pericias": ["lista das perícias com proficiência"],
+  "caracteristicas": ["características de classe/raça para nível ${nivel}"],
+  "magias": [],
+  "equipamento": ["equipamento inicial da classe"],
+  "historia": "backstory 2-3 frases",
+  "personalidade": "traço de personalidade",
+  "ideal": "ideal",
+  "vinculo": "vínculo",
+  "fraqueza": "defeito"
 }`;
 
-    try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1000,
-          messages: [{ role: 'user', content: prompt }]
-        })
-      });
-      const data = await res.json();
-      const text = data.content.map(i => i.text || '').join('');
-      const clean = text.replace(/```json|```/g, '').trim();
-      fichaAtual = JSON.parse(clean);
-      renderFicha(fichaAtual);
-      document.getElementById('save-row').style.setProperty('display', 'flex', 'important');
-    } catch(e) {
-      box.innerHTML = `<div class="empty-state"><div class="icon">⚠</div><p>Erro ao gerar personagem.<br>Verifique sua conexão.</p></div>`;
-    } finally {
-      box.classList.remove('loading');
-    }
-  }
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1000, messages:[{role:'user',content:prompt}] })
+    });
+    const data = await res.json();
+    const txt = data.content.map(i=>i.text||'').join('').replace(/```json|```/g,'').trim();
+    const f = JSON.parse(txt);
 
-  function renderFicha(f) {
-    const box = document.getElementById('ficha-result');
-    const attrs = ['FOR','DES','CON','INT','SAB','CAR'];
-    box.innerHTML = `
-      <div class="ficha-block">
-        <h4>Identidade</h4>
-        <p><strong style="color:var(--gold);font-family:'Cinzel',serif;font-size:1.2rem">${f.nome}</strong></p>
-        <p>${f.raca} • ${f.classe} • Nível ${f.nivel} • ${f.tendencia}</p>
-      </div>
-      <div class="ficha-block">
-        <h4>Atributos</h4>
-        <div class="attrs-grid">
-          ${attrs.map(a=>`<div class="attr-box"><div class="val">${f.atributos[a]}</div><div class="lbl">${a}</div></div>`).join('')}
-        </div>
-      </div>
-      <div class="ficha-block">
-        <h4>Combate</h4>
-        <p>❤ PV: <strong>${f.pv}</strong> &nbsp; 🛡 CA: <strong>${f.ca}</strong> &nbsp; ⚡ Iniciativa: <strong>${f.iniciativa > 0 ? '+' : ''}${f.iniciativa}</strong></p>
-      </div>
-      ${f.magias?.length ? `<div class="ficha-block"><h4>Magias</h4><p>${f.magias.slice(0,6).join(' • ')}</p></div>` : ''}
-      <div class="ficha-block">
-        <h4>Equipamento</h4>
-        <p>${f.equipamento.join(' • ')}</p>
-      </div>
-      <div class="ficha-block">
-        <h4>Habilidades</h4>
-        <p>${f.habilidades.join(' • ')}</p>
-      </div>
-      <div class="ficha-block">
-        <h4>História</h4>
-        <p>${f.historia}</p>
-      </div>
-      <div class="ficha-block">
-        <h4>Personalidade & Objetivo</h4>
-        <p>${f.personalidade}<br><em>${f.objetivo}</em></p>
-      </div>`;
-  }
+    // Apply racial bonuses from book data
+    const bonuses = RACIAL_BONUS[f.raca] || {};
+    Object.keys(bonuses).forEach(a => { if(f.atributos[a] !== undefined) f.atributos[a] += bonuses[a]; });
 
-  async function salvarFicha() {
-    if (!fichaAtual) return;
-    const u = firebase.auth().currentUser;
-    if (!u) return showToast('Faça login para salvar', 'error');
-    try {
-      await firebase.firestore().collection('fichas').add({
-        ...fichaAtual, uid: u.uid, criadoEm: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      showToast('Ficha salva com sucesso!');
-    } catch(e) { showToast('Erro ao salvar', 'error'); }
-  }
+    // Calculate derived stats from book formulas
+    f.pv        = calcPV(f.classe, f.nivel, mod(f.atributos.CON));
+    f.ca        = calcCA(f.classe, f.atributos);
+    f.iniciativa = mod(f.atributos.DES);
+    f.profBonus  = PROF_BONUS[f.nivel] || 2;
+    f.dado       = (CLASSES[f.classe]||{dado:8}).dado;
+    f.profArmor  = (CLASSES[f.classe]||{}).armor || '';
+    f.profWeapon = (CLASSES[f.classe]||{}).weapons || '';
 
-  function copiarFicha() {
-    if (!fichaAtual) return;
-    navigator.clipboard.writeText(JSON.stringify(fichaAtual, null, 2));
-    showToast('Ficha copiada!');
+    fichaAtual = f;
+    renderFicha(f);
+    document.getElementById('save-row').style.display = 'flex';
+  } catch(e) {
+    document.getElementById('empty-state').innerHTML = `<div class="icon">⚠</div><p>Erro: ${e.message}</p>`;
+    document.getElementById('empty-state').style.display = 'flex';
+  } finally {
+    document.getElementById('spinner').classList.remove('show');
   }
+}
+
+function renderFicha(f) {
+  const a = f.atributos;
+  document.getElementById('ficha-content').innerHTML = `
+    <div class="ficha-block">
+      <h4>Identidade</h4>
+      <p style="font-family:'Cinzel',serif;font-size:1.3rem;color:var(--gold);font-weight:900;margin-bottom:0.3rem">${f.nome}</p>
+      <p>${f.raca} &bull; ${f.classe} &bull; Nível ${f.nivel}</p>
+      <p style="color:var(--text-dim);font-style:italic;margin-top:0.2rem">${f.tendencia} &mdash; ${f.antecedente||''}</p>
+    </div>
+
+    <div class="ficha-block">
+      <h4>Atributos (com bônus racial)</h4>
+      <div class="attrs-grid">
+        ${['FOR','DES','CON','INT','SAB','CAR'].map(attr=>`
+          <div class="attr-box">
+            <div class="val">${a[attr]}</div>
+            <div class="mod">${modStr(a[attr])}</div>
+            <div class="lbl">${attr}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <div class="ficha-block">
+      <h4>Combate</h4>
+      <div class="combat-row">
+        <div class="combat-chip"><div class="cv">${f.pv}</div><div class="cl">PV (d${f.dado})</div></div>
+        <div class="combat-chip"><div class="cv">${f.ca}</div><div class="cl">CA</div></div>
+        <div class="combat-chip"><div class="cv">${f.iniciativa>=0?'+':''}${f.iniciativa}</div><div class="cl">INICIATIVA</div></div>
+        <div class="combat-chip"><div class="cv">+${f.profBonus}</div><div class="cl">PROF</div></div>
+      </div>
+    </div>
+
+    ${f.caracteristicas?.length ? `
+    <div class="ficha-block">
+      <h4>Características</h4>
+      <div class="tag-list">${f.caracteristicas.map(c=>`<span class="tag-item">${c}</span>`).join('')}</div>
+    </div>` : ''}
+
+    <div class="ficha-block">
+      <h4>Perícias</h4>
+      <div class="tag-list">${(f.pericias||[]).map(p=>`<span class="tag-item">✓ ${p}</span>`).join('')}</div>
+    </div>
+
+    <div class="ficha-block">
+      <h4>Proficiências</h4>
+      <p style="font-size:0.85rem;color:var(--text-dim)">
+        <strong style="color:var(--text-parch)">Armaduras:</strong> ${f.profArmor}<br>
+        <strong style="color:var(--text-parch)">Armas:</strong> ${f.profWeapon}
+      </p>
+    </div>
+
+    ${f.magias?.length ? `
+    <div class="ficha-block">
+      <h4>Magias</h4>
+      <div class="tag-list">${f.magias.map(m=>`<span class="tag-item">✨ ${m}</span>`).join('')}</div>
+    </div>` : ''}
+
+    <div class="ficha-block">
+      <h4>Equipamento</h4>
+      <div class="tag-list">${(f.equipamento||[]).map(e=>`<span class="tag-item">⚔ ${e}</span>`).join('')}</div>
+    </div>
+
+    <div class="ficha-block">
+      <h4>História</h4>
+      <p>${f.historia}</p>
+    </div>
+
+    <div class="ficha-block">
+      <h4>Personalidade & Motivações</h4>
+      <p>${f.personalidade}</p>
+      <p style="margin-top:0.4rem"><em style="color:var(--gold-dark)">Ideal:</em> ${f.ideal}</p>
+      <p><em style="color:var(--gold-dark)">Vínculo:</em> ${f.vinculo}</p>
+      <p><em style="color:var(--gold-dark)">Fraqueza:</em> ${f.fraqueza}</p>
+    </div>`;
+  document.getElementById('ficha-content').style.display = 'block';
+}
+
+async function salvarFicha() {
+  if (!fichaAtual) return;
+  const u = firebase.auth().currentUser;
+  if (!u) return showToast('Faça login para salvar', 'error');
+  try {
+    await firebase.firestore().collection('fichas').add({...fichaAtual, uid:u.uid, criadoEm:firebase.firestore.FieldValue.serverTimestamp()});
+    showToast('Ficha salva!');
+  } catch(e) { showToast('Erro ao salvar', 'error'); }
+}
+
+function copiarFicha() {
+  if (!fichaAtual) return;
+  navigator.clipboard.writeText(JSON.stringify(fichaAtual, null, 2));
+  showToast('Copiado!');
+}
 </script>
 {% endblock %}

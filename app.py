@@ -14,10 +14,8 @@ try:
     if not firebase_admin._apps:
         cred_json = os.environ.get('FIREBASE_CREDENTIALS_JSON')
         if cred_json:
-            # Produção: lê da variável de ambiente do Render
             cred = credentials.Certificate(json.loads(cred_json))
         else:
-            # Local: lê do arquivo
             cred = credentials.Certificate('serviceAccountKey.json')
         firebase_admin.initialize_app(cred)
 
@@ -125,14 +123,24 @@ def api_login():
 def api_register():
     return jsonify({'status': 'ok'})
 
-if __name__ == '__main__':
-    app.run(debug=True)
-
-
 # ─── Groq API Proxy ───────────────────────────────────────────
 @app.route('/api/gerar-ficha', methods=['POST'])
 def api_gerar_ficha():
     import requests as req_lib
+
+    # ── Verifica acesso pago ──
+    if FIREBASE_ADMIN_ENABLED:
+        token = request.cookies.get('fb_token')
+        if not token:
+            return jsonify({'error': 'sem_acesso', 'redirect': '/planos'}), 403
+        try:
+            decoded = fb_auth.verify_id_token(token)
+            uid = decoded['uid']
+            doc = db.collection('usuarios').document(uid).get()
+            if not doc.exists or not doc.to_dict().get('ficha_ativa', False):
+                return jsonify({'error': 'sem_acesso', 'redirect': '/planos'}), 403
+        except Exception:
+            return jsonify({'error': 'sem_acesso', 'redirect': '/planos'}), 403
 
     api_key = os.environ.get('GROQ_API_KEY')
     if not api_key:
@@ -163,3 +171,6 @@ def api_gerar_ficha():
     except Exception as e:
         print(f"Groq error: {e}")
         return jsonify({'error': str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True)

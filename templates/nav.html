@@ -1,0 +1,42 @@
+<nav>
+  <a href="/dashboard" class="nav-logo">
+    <img src="/static/images/logo.png" alt="Logo" onerror="this.style.display='none'" />
+    <span>The Legend of D&D</span>
+  </a>
+
+  <ul class="nav-links">
+    <li><a href="/dashboard" id="nav-home">⚔ Home</a></li>
+    <li><a href="/auto-ficha" id="nav-ficha">📜 Auto Ficha</a></li>
+    <li><a href="/npcs" id="nav-npcs">👥 NPCs & Bosses</a></li>
+    <li><a href="/mapas" id="nav-mapas">🗺 Mapas</a></li>
+    <li><a href="/loja" id="nav-loja">🏪 Loja</a></li>
+  </ul>
+
+  <div class="nav-user">
+    <span id="user-email">Aventureiro</span>
+    <button class="btn-logout" onclick="logout()">Sair</button>
+  </div>
+</nav>
+
+<script>
+  // Highlight active nav link
+  const path = window.location.pathname;
+  const map = {'/dashboard':'nav-home','/auto-ficha':'nav-ficha','/npcs':'nav-npcs','/mapas':'nav-mapas','/loja':'nav-loja'};
+  if (map[path]) document.getElementById(map[path])?.classList.add('active');
+
+  function logout() {
+    if (typeof firebase !== 'undefined') {
+      firebase.auth().signOut().then(() => window.location.href = '/login');
+    } else { window.location.href = '/login'; }
+  }
+
+  // Show user email
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof firebase !== 'undefined') {
+      firebase.auth().onAuthStateChanged(u => {
+        if (u) document.getElementById('user-email').textContent = u.displayName || u.email.split('@')[0];
+        else window.location.href = '/login';
+      });
+    }
+  });
+</script>

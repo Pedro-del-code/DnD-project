@@ -158,8 +158,6 @@ def api_gerar_ficha():
     try:
         with urllib.request.urlopen(req) as resp:
             result = pyjson.loads(resp.read())
-            # Retorna no formato que o frontend espera
-            text = result['choices'][0]['message']['content']
-            return jsonify({'content': [{'type': 'text', 'text': text}]})
+            return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 500

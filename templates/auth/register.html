@@ -8,12 +8,11 @@
   .auth-bg {
     position: fixed; inset: 0; z-index: 0;
     background: url('/static/images/dragon-bg.jpg') center center / cover no-repeat;
-    filter: brightness(0.3) saturate(0.6);
+    filter: brightness(0.85) saturate(1.05);
   }
   .auth-bg::after {
     content: ''; position: absolute; inset: 0;
-    background: radial-gradient(ellipse at 70% 50%, rgba(139,26,26,0.15) 0%, transparent 70%),
-                linear-gradient(to left, rgba(10,8,4,0.95) 0%, rgba(10,8,4,0.5) 50%, rgba(10,8,4,0.85) 100%);
+    background: linear-gradient(to left, rgba(10,8,4,0.55) 0%, rgba(10,8,4,0.1) 40%, rgba(10,8,4,0.4) 100%);
   }
 
   .auth-wrap {
@@ -25,12 +24,13 @@
 
   .auth-panel {
     width: 100%; max-width: 420px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
+    background: rgba(10,8,4,0.45);
+    border: 1px solid rgba(201,168,76,0.35);
     border-radius: 12px;
     padding: 2.5rem 2rem;
-    backdrop-filter: blur(20px);
-    box-shadow: 0 8px 48px rgba(0,0,0,0.8), inset 0 1px 0 rgba(201,168,76,0.1);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 8px 48px rgba(0,0,0,0.4), inset 0 1px 0 rgba(201,168,76,0.15);
     animation: fadeUp 0.5s ease;
   }
 
@@ -116,6 +116,16 @@
 
 {% block extra_scripts %}
 <script>
+  async function salvarSessao() {
+    const token = await firebase.auth().currentUser.getIdToken();
+    await fetch('/api/auth/session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token })
+    });
+    window.location.href = '/dashboard';
+  }
+
   function register() {
     const name  = document.getElementById('name').value.trim();
     const email = document.getElementById('email').value;
@@ -127,7 +137,7 @@
 
     firebase.auth().createUserWithEmailAndPassword(email, pass)
       .then(cred => cred.user.updateProfile({ displayName: name }))
-      .then(() => window.location.href = '/dashboard')
+      .then(salvarSessao)
       .catch(e => showToast(e.message, 'error'));
   }
 

@@ -8,7 +8,7 @@
   .auth-bg {
     position: fixed; inset: 0; z-index: 0;
     background: url('/static/images/dragon-bg.jpg') center center / cover no-repeat;
-    filter: brightness(0.35) saturate(0.7);
+    filter: brightness(0.85) saturate(1.0);
   }
   .auth-bg::after {
     content: ''; position: absolute; inset: 0;
@@ -25,12 +25,13 @@
 
   .auth-panel {
     width: 100%; max-width: 400px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
+    background: rgba(10,8,4,0.45);
+    border: 1px solid rgba(201,168,76,0.35);
     border-radius: 12px;
     padding: 2.5rem 2rem;
-    backdrop-filter: blur(20px);
-    box-shadow: 0 8px 48px rgba(0,0,0,0.8), inset 0 1px 0 rgba(201,168,76,0.1);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 8px 48px rgba(0,0,0,0.4), inset 0 1px 0 rgba(201,168,76,0.15);
     animation: fadeUp 0.5s ease;
   }
 
@@ -138,19 +139,29 @@
 
 {% block extra_scripts %}
 <script>
+  async function salvarSessao() {
+    const token = await firebase.auth().currentUser.getIdToken();
+    await fetch('/api/auth/session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token })
+    });
+    window.location.href = '/dashboard';
+  }
+
   function loginEmail() {
     const email = document.getElementById('email').value;
     const pass  = document.getElementById('password').value;
     if (!email || !pass) return showToast('Preencha todos os campos', 'error');
     firebase.auth().signInWithEmailAndPassword(email, pass)
-      .then(() => window.location.href = '/dashboard')
+      .then(salvarSessao)
       .catch(e => showToast(e.message, 'error'));
   }
 
   function loginGoogle() {
     const provider = new firebase.auth.GoogleAuthProvider();
     firebase.auth().signInWithPopup(provider)
-      .then(() => window.location.href = '/dashboard')
+      .then(salvarSessao)
       .catch(e => showToast(e.message, 'error'));
   }
 

@@ -435,10 +435,12 @@
       <input type="email" id="novo-email" placeholder="email@exemplo.com" />
     </div>
     <div class="form-group">
-      <label>Acesso à Ficha</label>
-      <select id="novo-acesso">
-        <option value="true">✔ Ativo</option>
-        <option value="false">✘ Inativo</option>
+      <label>Plano</label>
+      <select id="novo-plano">
+        <option value="inativo">✘ Sem acesso</option>
+        <option value="mensal">Mensal — 30 dias</option>
+        <option value="bimestral">Bimestral — 60 dias</option>
+        <option value="semestral">Semestral — 180 dias</option>
       </select>
     </div>
     <div class="modal-btns">
@@ -491,7 +493,12 @@
             ${u.ficha_ativa ? '✔ ATIVO' : '✘ INATIVO'}
           </span>
         </div>
-        <div>
+        <div style="display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap">
+          ${!u.ficha_ativa ? `<select class="plano-sel" id="plano-${u.uid}" style="background:#0e0c14;border:1px solid rgba(180,140,255,0.13);border-radius:5px;color:#ccc0e8;font-size:0.6rem;padding:0.2rem 0.3rem;font-family:'Cinzel',serif">
+            <option value="mensal">30d</option>
+            <option value="bimestral">60d</option>
+            <option value="semestral">180d</option>
+          </select>` : ''}
           <button class="btn-toggle" onclick="toggleAcesso('${u.uid}', ${u.ficha_ativa})">
             ${u.ficha_ativa ? 'REVOGAR' : 'ATIVAR'}
           </button>
@@ -515,11 +522,17 @@
     const btn = document.querySelector(`#row-${uid} .btn-toggle`);
     if (btn) btn.classList.add('loading');
 
+    let plano = null;
+    if (!ativoAtual) {
+      const sel = document.getElementById(`plano-${uid}`);
+      plano = sel ? sel.value : 'mensal';
+    }
+
     try {
       const r = await fetch('/admin/api/toggle-acesso', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uid, ficha_ativa: !ativoAtual })
+        body: JSON.stringify({ uid, ficha_ativa: !ativoAtual, plano })
       });
       if (r.status === 401) { window.location.href = '/admin'; return; }
       const data = await r.json();
@@ -554,11 +567,11 @@
   }
 
   async function adicionarUsuario() {
-    const uid    = document.getElementById('novo-uid').value.trim();
-    const nome   = document.getElementById('novo-nome').value.trim();
-    const email  = document.getElementById('novo-email').value.trim();
-    const acesso = document.getElementById('novo-acesso').value === 'true';
-    const erro   = document.getElementById('modal-erro');
+    const uid   = document.getElementById('novo-uid').value.trim();
+    const nome  = document.getElementById('novo-nome').value.trim();
+    const email = document.getElementById('novo-email').value.trim();
+    const plano = document.getElementById('novo-plano').value;
+    const erro  = document.getElementById('modal-erro');
 
     if (!uid) { erro.classList.add('show'); return; }
     erro.classList.remove('show');
@@ -567,7 +580,7 @@
       const r = await fetch('/admin/api/adicionar-usuario', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uid, nome, email, ficha_ativa: acesso })
+        body: JSON.stringify({ uid, nome, email, plano })
       });
       const data = await r.json();
       if (data.ok) {

@@ -159,5 +159,10 @@ def api_gerar_ficha():
         with urllib.request.urlopen(req) as resp:
             result = pyjson.loads(resp.read())
             return jsonify(result)
+    except urllib.error.HTTPError as e:
+        body = e.read().decode('utf-8')
+        print(f"Groq HTTP error {e.code}: {body}")
+        return jsonify({'error': f'Groq error {e.code}: {body}'}), 500
     except Exception as e:
+        print(f"Groq exception: {e}")
         return jsonify({'error': str(e)}), 500

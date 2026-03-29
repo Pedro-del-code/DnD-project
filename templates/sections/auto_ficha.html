@@ -277,7 +277,14 @@ Responda APENAS JSON puro, sem markdown:
       body: JSON.stringify({ prompt })
     });
     const data = await res.json();
-    const txt = data.content.map(i=>i.text||'').join('').replace(/```json|```/g,'').trim();
+    // Suporta formato Groq e formato Anthropic
+    let txt;
+    if (data.choices) {
+      txt = data.choices[0].message.content;
+    } else {
+      txt = data.content.map(i=>i.text||'').join('');
+    }
+    txt = txt.replace(/```json|```/g,'').trim();
     const f = JSON.parse(txt);
 
     // Apply racial bonuses from book data

@@ -1,0 +1,439 @@
+{% extends "base.html" %}
+{% block title %}Planos — The Legend of D&D{% endblock %}
+{% block nav %}{% include "nav.html" %}{% endblock %}
+
+{% block extra_head %}
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cinzel+Decorative:wght@700&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root {
+    --gold: #c9a84c;
+    --gold-dark: #a07830;
+    --gold-light: #e8c97a;
+    --bg: #0a0804;
+    --bg-card: #120e06;
+    --border: rgba(201,168,76,0.18);
+    --text-parch: #d4c49a;
+    --text-dim: #7a6a4a;
+  }
+
+  .planos-page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  .planos-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+
+  .planos-header .rune {
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: 0.5rem;
+    filter: drop-shadow(0 0 12px rgba(201,168,76,0.5));
+  }
+
+  .planos-header h1 {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(1.4rem, 4vw, 2rem);
+    color: var(--gold);
+    text-shadow: 0 0 30px rgba(201,168,76,0.4);
+    margin-bottom: 0.5rem;
+  }
+
+  .planos-header p {
+    font-family: 'IM Fell English', serif;
+    font-style: italic;
+    color: var(--text-dim);
+    font-size: 1rem;
+  }
+
+  /* ── Cards ── */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+  }
+
+  @media (max-width: 680px) {
+    .cards-grid { grid-template-columns: 1fr; }
+  }
+
+  .plano-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem 1.25rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .plano-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at top, rgba(201,168,76,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .plano-card:hover {
+    border-color: var(--gold-dark);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 32px rgba(201,168,76,0.12);
+  }
+
+  .plano-card.selected {
+    border-color: var(--gold);
+    box-shadow: 0 0 24px rgba(201,168,76,0.2), inset 0 0 20px rgba(201,168,76,0.04);
+  }
+
+  .plano-card .badge {
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    color: var(--bg);
+    background: var(--gold);
+    border-radius: 3px;
+    padding: 0.2rem 0.6rem;
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+  }
+
+  .plano-card .periodo {
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+
+  .plano-card .preco {
+    font-family: 'Cinzel', serif;
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--gold);
+    line-height: 1;
+    margin-bottom: 0.2rem;
+  }
+
+  .plano-card .preco span {
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: var(--text-dim);
+  }
+
+  .plano-card .economia {
+    font-family: 'IM Fell English', serif;
+    font-style: italic;
+    font-size: 0.8rem;
+    color: var(--gold-dark);
+    margin-top: 0.5rem;
+    min-height: 1.2em;
+  }
+
+  .plano-card .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 1rem 0;
+  }
+
+  .plano-card .features {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    text-align: left;
+  }
+
+  .plano-card .features li {
+    font-family: 'IM Fell English', serif;
+    font-size: 0.85rem;
+    color: var(--text-parch);
+    padding: 0.25rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .plano-card .features li::before {
+    content: '⚔';
+    font-size: 0.7rem;
+    color: var(--gold-dark);
+    flex-shrink: 0;
+  }
+
+  /* ── Pix Section ── */
+  .pix-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.75rem;
+    display: none;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .pix-section.show { display: block; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .pix-section h3 {
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    color: var(--gold-dark);
+    text-transform: uppercase;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .pix-body {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+  }
+
+  @media (max-width: 580px) {
+    .pix-body { flex-direction: column; align-items: center; }
+  }
+
+  .qr-wrap {
+    flex-shrink: 0;
+    background: #fff;
+    border-radius: 8px;
+    padding: 10px;
+    width: 140px;
+    height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #qrcode canvas, #qrcode img { width: 120px !important; height: 120px !important; }
+
+  .pix-info { flex: 1; }
+
+  .pix-info .pix-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 0.3rem;
+  }
+
+  .pix-info .pix-nome {
+    font-family: 'Cinzel', serif;
+    font-size: 0.95rem;
+    color: var(--gold);
+    margin-bottom: 0.2rem;
+  }
+
+  .pix-info .pix-valor {
+    font-family: 'Cinzel', serif;
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: var(--gold-light);
+    margin-bottom: 1rem;
+  }
+
+  .pix-copy-wrap {
+    margin-top: 0.75rem;
+  }
+
+  .pix-copy-wrap .pix-label { margin-bottom: 0.4rem; }
+
+  .pix-code {
+    background: rgba(201,168,76,0.04);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    word-break: break-all;
+    font-family: monospace;
+    margin-bottom: 0.6rem;
+    line-height: 1.5;
+    max-height: 80px;
+    overflow-y: auto;
+  }
+
+  .btn-copy {
+    background: transparent;
+    border: 1px solid var(--gold-dark);
+    color: var(--gold);
+    font-family: 'Cinzel', serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    padding: 0.55rem 1.25rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    width: 100%;
+  }
+
+  .btn-copy:hover { background: rgba(201,168,76,0.1); }
+  .btn-copy.copied { background: rgba(201,168,76,0.15); color: var(--gold-light); border-color: var(--gold); }
+
+  .pix-aviso {
+    margin-top: 1.25rem;
+    padding: 0.75rem 1rem;
+    background: rgba(201,168,76,0.04);
+    border-left: 2px solid var(--gold-dark);
+    border-radius: 0 6px 6px 0;
+    font-family: 'IM Fell English', serif;
+    font-style: italic;
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="planos-page">
+
+    <div class="planos-header">
+      <span class="rune">⚜</span>
+      <h1>Ficha Automática</h1>
+      <p>Escolha seu pergaminho e comece sua jornada</p>
+    </div>
+
+    <div class="cards-grid">
+
+      <!-- Mensal -->
+      <div class="plano-card" id="card-mensal" onclick="selecionarPlano('mensal')">
+        <div class="periodo">Mensal</div>
+        <div class="preco">R$7<span>,90/mês</span></div>
+        <div class="economia"></div>
+        <div class="divider"></div>
+        <ul class="features">
+          <li>Fichas ilimitadas</li>
+          <li>Todos os personagens</li>
+          <li>Salvar no perfil</li>
+        </ul>
+      </div>
+
+      <!-- Bimestral -->
+      <div class="plano-card" id="card-bimestral" onclick="selecionarPlano('bimestral')">
+        <div class="badge">POPULAR</div>
+        <div class="periodo">Bimestral</div>
+        <div class="preco">R$12<span>,90/2 meses</span></div>
+        <div class="economia">Economize R$2,90</div>
+        <div class="divider"></div>
+        <ul class="features">
+          <li>Fichas ilimitadas</li>
+          <li>Todos os personagens</li>
+          <li>Salvar no perfil</li>
+        </ul>
+      </div>
+
+      <!-- Semestral -->
+      <div class="plano-card" id="card-semestral" onclick="selecionarPlano('semestral')">
+        <div class="periodo">Semestral</div>
+        <div class="preco">R$36<span>,90/6 meses</span></div>
+        <div class="economia">Economize R$10,50</div>
+        <div class="divider"></div>
+        <ul class="features">
+          <li>Fichas ilimitadas</li>
+          <li>Todos os personagens</li>
+          <li>Salvar no perfil</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- Pix Section -->
+    <div class="pix-section" id="pix-section">
+      <h3>🪙 Pagamento via Pix — <span id="pix-titulo"></span></h3>
+      <div class="pix-body">
+        <div class="qr-wrap">
+          <div id="qrcode"></div>
+        </div>
+        <div class="pix-info">
+          <div class="pix-label">Beneficiário</div>
+          <div class="pix-nome">João Lucas de Oliveira</div>
+          <div class="pix-valor" id="pix-valor"></div>
+          <div class="pix-copy-wrap">
+            <div class="pix-label">Pix Copia e Cola</div>
+            <div class="pix-code" id="pix-code"></div>
+            <button class="btn-copy" id="btn-copy" onclick="copiarPix()">📋 COPIAR CÓDIGO PIX</button>
+          </div>
+        </div>
+      </div>
+      <div class="pix-aviso">
+        Após o pagamento, envie o comprovante para liberação do acesso. O acesso será ativado em até 24h.
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const PLANOS = {
+  mensal:    { titulo: 'Mensal — R$ 7,90',    valor: 'R$ 7,90',   codigo: '00020126580014BR.GOV.BCB.PIX0136aeb707a5-e662-4902-80a8-ed3dc3b3380b52040000530398654047.905802BR5925JOAO LUCAS DE OLIVEIRA RE6008Luziania61087282404462070503***63049000' },
+  bimestral: { titulo: 'Bimestral — R$ 12,90', valor: 'R$ 12,90', codigo: '00020126580014BR.GOV.BCB.PIX0136aeb707a5-e662-4902-80a8-ed3dc3b3380b520400005303986540512.905802BR5925JOAO LUCAS DE OLIVEIRA RE6008Luziania61087282404462070503***6304F627' },
+  semestral: { titulo: 'Semestral — R$ 36,90', valor: 'R$ 36,90', codigo: '00020126580014BR.GOV.BCB.PIX0136aeb707a5-e662-4902-80a8-ed3dc3b3380b520400005303986540536.905802BR5925JOAO LUCAS DE OLIVEIRA RE6008Luziania61087282404462070503***6304004E' },
+};
+
+let planoAtual = null;
+
+function selecionarPlano(id) {
+  // Remove seleção anterior
+  document.querySelectorAll('.plano-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('card-' + id).classList.add('selected');
+
+  const plano = PLANOS[id];
+  planoAtual = plano;
+
+  document.getElementById('pix-titulo').textContent = plano.titulo;
+  document.getElementById('pix-valor').textContent = plano.valor;
+  document.getElementById('pix-code').textContent = plano.codigo;
+
+  // Gera QR Code
+  const qrDiv = document.getElementById('qrcode');
+  qrDiv.innerHTML = '';
+  new QRCode(qrDiv, {
+    text: plano.codigo,
+    width: 120,
+    height: 120,
+    colorDark: '#000000',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+
+  // Reset botão
+  const btn = document.getElementById('btn-copy');
+  btn.textContent = '📋 COPIAR CÓDIGO PIX';
+  btn.classList.remove('copied');
+
+  // Mostra seção
+  const section = document.getElementById('pix-section');
+  section.classList.add('show');
+  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function copiarPix() {
+  if (!planoAtual) return;
+  navigator.clipboard.writeText(planoAtual.codigo).then(() => {
+    const btn = document.getElementById('btn-copy');
+    btn.textContent = '✔ COPIADO!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = '📋 COPIAR CÓDIGO PIX';
+      btn.classList.remove('copied');
+    }, 3000);
+  });
+}
+</script>
+{% endblock %}

@@ -93,6 +93,11 @@ def npcs():
 def mapas():
     return render_template('sections/mapas.html')
 
+@app.route('/planos')
+@login_required
+def planos():
+    return render_template('sections/planos.html')
+
 # ─── API Routes ────────────────────────────────────────────────
 @app.route('/api/auth/session', methods=['POST'])
 def api_set_session():

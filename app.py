@@ -14,8 +14,10 @@ try:
     if not firebase_admin._apps:
         cred_json = os.environ.get('FIREBASE_CREDENTIALS_JSON')
         if cred_json:
+            # Produção: lê da variável de ambiente do Render
             cred = credentials.Certificate(json.loads(cred_json))
         else:
+            # Local: lê do arquivo
             cred = credentials.Certificate('serviceAccountKey.json')
         firebase_admin.initialize_app(cred)
 
@@ -91,11 +93,6 @@ def npcs():
 def mapas():
     return render_template('sections/mapas.html')
 
-@app.route('/planos')
-@login_required
-def planos():
-    return render_template('sections/planos.html')
-
 # ─── API Routes ────────────────────────────────────────────────
 @app.route('/api/auth/session', methods=['POST'])
 def api_set_session():
@@ -123,24 +120,14 @@ def api_login():
 def api_register():
     return jsonify({'status': 'ok'})
 
+if __name__ == '__main__':
+    app.run(debug=True)
+
+
 # ─── Groq API Proxy ───────────────────────────────────────────
 @app.route('/api/gerar-ficha', methods=['POST'])
 def api_gerar_ficha():
     import requests as req_lib
-
-    # ── Verifica acesso pago ──
-    if FIREBASE_ADMIN_ENABLED:
-        token = request.cookies.get('fb_token')
-        if not token:
-            return jsonify({'error': 'sem_acesso', 'redirect': '/planos'}), 403
-        try:
-            decoded = fb_auth.verify_id_token(token)
-            uid = decoded['uid']
-            doc = db.collection('usuarios').document(uid).get()
-            if not doc.exists or not doc.to_dict().get('ficha_ativa', False):
-                return jsonify({'error': 'sem_acesso', 'redirect': '/planos'}), 403
-        except Exception:
-            return jsonify({'error': 'sem_acesso', 'redirect': '/planos'}), 403
 
     api_key = os.environ.get('GROQ_API_KEY')
     if not api_key:
@@ -172,5 +159,85 @@ def api_gerar_ficha():
         print(f"Groq error: {e}")
         return jsonify({'error': str(e)}), 500
 
-if __name__ == '__main__':
-    app.run(debug=True)
+
+# ─── Admin ────────────────────────────────────────────────────
+import hashlib
+
+ADMIN_EMAIL = 'legendofdnd.suporte@gmail.com'
+ADMIN_SENHA_HASH = hashlib.sha256('legendmilionario'.encode()).hexdigest()
+
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get('admin_logado'):
+            return redirect('/admin')
+        return f(*args, **kwargs)
+    return decorated
+
+@app.route('/admin')
+def admin_login():
+    if session.get('admin_logado'):
+        return redirect('/admin/dashboard')
+    return render_template('admin/login.html')
+
+@app.route('/admin/dashboard')
+@admin_required
+def admin_dashboard():
+    return render_template('admin/dashboard.html')
+
+@app.route('/admin/api/login', methods=['POST'])
+def admin_api_login():
+    data = request.get_json()
+    email = data.get('email', '').strip()
+    senha = data.get('senha', '')
+    senha_hash = hashlib.sha256(senha.encode()).hexdigest()
+    if email == ADMIN_EMAIL and senha_hash == ADMIN_SENHA_HASH:
+        session['admin_logado'] = True
+        return jsonify({'ok': True})
+    return jsonify({'ok': False}), 401
+
+@app.route('/admin/api/logout', methods=['POST'])
+def admin_api_logout():
+    session.pop('admin_logado', None)
+    return jsonify({'ok': True})
+
+@app.route('/admin/api/usuarios')
+@admin_required
+def admin_api_usuarios():
+    if not FIREBASE_ADMIN_ENABLED:
+        return jsonify({'usuarios': []})
+    docs = db.collection('usuarios').stream()
+    usuarios = []
+    for doc in docs:
+        d = doc.to_dict()
+        d['uid'] = doc.id
+        usuarios.append(d)
+    return jsonify({'usuarios': usuarios})
+
+@app.route('/admin/api/toggle-acesso', methods=['POST'])
+@admin_required
+def admin_api_toggle():
+    if not FIREBASE_ADMIN_ENABLED:
+        return jsonify({'ok': False, 'error': 'Firebase não disponível'}), 500
+    data = request.get_json()
+    uid = data.get('uid')
+    ficha_ativa = data.get('ficha_ativa', False)
+    if not uid:
+        return jsonify({'ok': False, 'error': 'UID ausente'}), 400
+    db.collection('usuarios').document(uid).set({'ficha_ativa': ficha_ativa}, merge=True)
+    return jsonify({'ok': True})
+
+@app.route('/admin/api/adicionar-usuario', methods=['POST'])
+@admin_required
+def admin_api_adicionar():
+    if not FIREBASE_ADMIN_ENABLED:
+        return jsonify({'ok': False, 'error': 'Firebase não disponível'}), 500
+    data = request.get_json()
+    uid = data.get('uid', '').strip()
+    if not uid:
+        return jsonify({'ok': False, 'error': 'UID ausente'}), 400
+    doc_data = {'ficha_ativa': data.get('ficha_ativa', False)}
+    if data.get('nome'):  doc_data['nome']  = data['nome']
+    if data.get('email'): doc_data['email'] = data['email']
+    db.collection('usuarios').document(uid).set(doc_data, merge=True)
+    return jsonify({'ok': True})

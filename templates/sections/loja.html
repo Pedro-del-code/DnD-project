@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block title %}Loja — The Legend of D&D{% endblock %}
+{% block nav %}{% include "nav.html" %}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .loja-wrap { padding: 1.5rem 2rem; max-width: 1300px; margin: 0 auto; }
+
+  .loja-banner {
+    background: linear-gradient(135deg, rgba(139,105,20,0.15) 0%, rgba(139,26,26,0.1) 100%);
+    border: 1px solid var(--border);
+    border-radius: 12px; padding: 2rem;
+    margin-bottom: 2rem;
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .loja-banner h2 {
+    font-family: 'Cinzel', serif; font-size: 1.3rem; color: var(--gold);
+    margin-bottom: 0.35rem;
+  }
+  .loja-banner p { color: var(--text-dim); font-style: italic; }
+
+  .loja-filters {
+    display: flex; gap: 0.75rem; margin-bottom: 1.5rem;
+    align-items: center; flex-wrap: wrap;
+  }
+  .loja-filters input { flex: 1; min-width: 200px; }
+  .loja-filters select { width: 160px; }
+
+  .produtos-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .produto-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden;
+    transition: all 0.25s;
+  }
+  .produto-card:hover { border-color: var(--border-h); box-shadow: var(--shadow-gold); transform: translateY(-3px); }
+
+  .prod-header {
+    background: linear-gradient(135deg, rgba(20,15,5,1), rgba(10,8,4,1));
+    padding: 1.5rem; text-align: center;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .prod-type-badge {
+    position: absolute; top: 0.75rem; left: 0.75rem;
+    font-family: 'Cinzel', serif; font-size: 0.65rem;
+    color: var(--gold-dark); border: 1px solid var(--border);
+    padding: 0.2rem 0.5rem; border-radius: 3px;
+    background: var(--bg-black);
+    letter-spacing: 0.1em;
+  }
+  .prod-icon { font-size: 3rem; margin-bottom: 0.5rem; }
+  .prod-name {
+    font-family: 'Cinzel', serif; font-size: 1rem; color: var(--gold);
+    font-weight: 600;
+  }
+  .prod-sub { font-size: 0.82rem; color: var(--text-dim); font-style: italic; margin-top: 0.2rem; }
+
+  .prod-body { padding: 1rem 1.25rem; }
+  .prod-tags { display: flex; gap: 0.35rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+  .prod-tag {
+    font-size: 0.68rem; font-family: 'Cinzel', serif;
+    color: var(--text-dim); border: 1px solid var(--border);
+    padding: 0.15rem 0.5rem; border-radius: 3px;
+  }
+  .prod-desc { font-size: 0.88rem; color: var(--text-dim); line-height: 1.5; }
+
+  .prod-footer {
+    padding: 0.9rem 1.25rem; border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .prod-price {
+    font-family: 'Cinzel', serif; font-size: 1.1rem; color: var(--gold);
+    font-weight: 900;
+  }
+  .prod-price small { font-size: 0.7rem; color: var(--text-dim); display: block; }
+  .prod-price.free { color: #6dbf6d; }
+
+  .stars { color: var(--gold); font-size: 0.8rem; letter-spacing: -0.1em; }
+
+  .vender-btn-row { display: flex; justify-content: flex-end; margin-bottom: 1.5rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="section-header">
+    <h1>🏪 Loja de Fichas</h1>
+    <p>Compre e venda fichas, NPCs e conteúdo criado pela comunidade</p>
+  </div>
+
+  <div class="loja-wrap">
+    <div class="loja-banner">
+      <div>
+        <h2>🪙 Venda seu Conteúdo</h2>
+        <p>Publique fichas, aventuras e mapas para a comunidade</p>
+      </div>
+      <button class="btn-gold" onclick="abrirVender()">+ Publicar Item</button>
+    </div>
+
+    <div class="loja-filters">
+      <input type="text" placeholder="Buscar fichas, aventuras, mapas..." />
+      <select>
+        <option>Todos os tipos</option>
+        <option>Fichas</option><option>Aventuras</option>
+        <option>NPCs</option><option>Mapas</option><option>Pacotes</option>
+      </select>
+      <select>
+        <option>Qualquer preço</option>
+        <option>Gratuito</option>
+        <option>Até R$10</option><option>Até R$25</option>
+      </select>
+    </div>
+
+    <div class="vender-btn-row">
+      <small style="color:var(--text-dim);font-style:italic">Sistema de pagamento em breve — mockup ativo</small>
+    </div>
+
+    <div class="produtos-grid">
+      <div class="produto-card">
+        <div class="prod-header">
+          <span class="prod-type-badge">FICHA</span>
+          <div class="prod-icon">⚔</div>
+          <div class="prod-name">Pack Guerreiros Lendários</div>
+          <div class="prod-sub">5 fichas nível 10-20 prontas</div>
+        </div>
+        <div class="prod-body">
+          <div class="prod-tags"><span class="prod-tag">Guerreiro</span><span class="prod-tag">Paladino</span><span class="prod-tag">Nível 10+</span></div>
+          <p class="prod-desc">Cinco guerreiros e paladinos de alto nível, com backstories completas e equipamentos únicos.</p>
+        </div>
+        <div class="prod-footer">
+          <div><div class="stars">★★★★★</div><div class="prod-price">R$ 9,90<small>34 vendas</small></div></div>
+          <button class="btn-gold" style="font-size:0.78rem;padding:0.55rem 1.2rem">Comprar</button>
+        </div>
+      </div>
+
+      <div class="produto-card">
+        <div class="prod-header">
+          <span class="prod-type-badge">AVENTURA</span>
+          <div class="prod-icon">📖</div>
+          <div class="prod-name">A Maldição de Vhalkor</div>
+          <div class="prod-sub">Aventura completa • 3-5 sessões</div>
+        </div>
+        <div class="prod-body">
+          <div class="prod-tags"><span class="prod-tag">Nível 5-8</span><span class="prod-tag">Horror</span><span class="prod-tag">4-5 sessões</span></div>
+          <p class="prod-desc">Uma aventura sombria com castelo amaldiçoado, NPCs detalhados e mapa de masmorra.</p>
+        </div>
+        <div class="prod-footer">
+          <div><div class="stars">★★★★☆</div><div class="prod-price">R$ 19,90<small>12 vendas</small></div></div>
+          <button class="btn-gold" style="font-size:0.78rem;padding:0.55rem 1.2rem">Comprar</button>
+        </div>
+      </div>
+
+      <div class="produto-card">
+        <div class="prod-header">
+          <span class="prod-type-badge">PACK NPC</span>
+          <div class="prod-icon">👥</div>
+          <div class="prod-name">Taverna Completa</div>
+          <div class="prod-sub">10 NPCs com personalidades</div>
+        </div>
+        <div class="prod-body">
+          <div class="prod-tags"><span class="prod-tag">NPCs</span><span class="prod-tag">Social</span><span class="prod-tag">Taverna</span></div>
+          <p class="prod-desc">Dono, bardos, mercenários, viajantes — uma taverna viva com diálogos prontos.</p>
+        </div>
+        <div class="prod-footer">
+          <div><div class="stars">★★★★★</div><div class="prod-price free">GRÁTIS<small>89 downloads</small></div></div>
+          <button class="btn-outline" style="font-size:0.78rem;padding:0.55rem 1.2rem">Baixar</button>
+        </div>
+      </div>
+
+      <div class="produto-card">
+        <div class="prod-header">
+          <span class="prod-type-badge">MAPA</span>
+          <div class="prod-icon">🗺</div>
+          <div class="prod-name">Masmorra dos Esquecidos</div>
+          <div class="prod-sub">Mapa + encontros + tesouro</div>
+        </div>
+        <div class="prod-body">
+          <div class="prod-tags"><span class="prod-tag">Masmorra</span><span class="prod-tag">CR 6-9</span><span class="prod-tag">VTT</span></div>
+          <p class="prod-desc">Mapa em alta resolução com grid, notas de mestre e tabelas de tesouro aleatório.</p>
+        </div>
+        <div class="prod-footer">
+          <div><div class="stars">★★★★☆</div><div class="prod-price">R$ 7,90<small>22 vendas</small></div></div>
+          <button class="btn-gold" style="font-size:0.78rem;padding:0.55rem 1.2rem">Comprar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  firebase.auth().onAuthStateChanged(u => { if (!u) window.location.href = '/login'; });
+
+  function abrirVender() {
+    showToast('Sistema de publicação em breve!');
+  }
+</script>
+{% endblock %}

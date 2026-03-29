@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+{% block title %}Auto Ficha — The Legend of D&D{% endblock %}
+{% block nav %}{% include "nav.html" %}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .ficha-layout {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 1.5rem;
+    padding: 1.5rem 2rem;
+    max-width: 1200px; margin: 0 auto;
+  }
+
+  .panel-left { display: flex; flex-direction: column; gap: 1rem; }
+
+  .ficha-result {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    min-height: 400px;
+    padding: 1.5rem;
+    position: relative;
+  }
+
+  .ficha-result.loading::after {
+    content: 'Gerando personagem...';
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cinzel', serif; color: var(--gold);
+    font-size: 0.9rem; letter-spacing: 0.1em;
+    background: rgba(10,8,4,0.8);
+    border-radius: 10px;
+  }
+
+  .ficha-block { margin-bottom: 1.25rem; }
+  .ficha-block h4 {
+    font-family: 'Cinzel', serif; font-size: 0.75rem;
+    color: var(--gold-dark); letter-spacing: 0.12em;
+    text-transform: uppercase; margin-bottom: 0.5rem;
+    padding-bottom: 0.35rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .ficha-block p { font-size: 0.95rem; color: var(--text-parch); line-height: 1.6; }
+
+  .attrs-grid {
+    display: grid; grid-template-columns: repeat(3,1fr); gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+  .attr-box {
+    background: rgba(201,168,76,0.06);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    text-align: center; padding: 0.5rem;
+  }
+  .attr-box .val {
+    font-family: 'Cinzel', serif; font-size: 1.2rem;
+    color: var(--gold); font-weight: 900;
+  }
+  .attr-box .lbl {
+    font-family: 'Cinzel', serif; font-size: 0.62rem;
+    color: var(--text-dim); letter-spacing: 0.1em;
+  }
+
+  .empty-state {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    height: 300px;
+    color: var(--text-dim); text-align: center;
+  }
+  .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
+  .empty-state p { font-style: italic; font-size: 0.9rem; }
+
+  select { color: var(--text-parch) !important; }
+  select option { background: #1a1206; }
+
+  .save-row { display: flex; gap: 0.75rem; margin-top: 1rem; }
+  .save-row .btn-outline, .save-row .btn-gold { flex: 1; font-size: 0.78rem; padding: 0.6rem; }
+
+  @media (max-width: 768px) {
+    .ficha-layout { grid-template-columns: 1fr; padding: 1rem; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="section-header">
+    <h1>📜 Auto Ficha</h1>
+    <p>Gere personagens D&D 5e completos com inteligência artificial</p>
+  </div>
+
+  <div class="ficha-layout">
+    <!-- Form Panel -->
+    <div class="panel-left">
+      <div class="card">
+        <div class="form-group">
+          <label>RAÇA</label>
+          <select id="raca">
+            <option value="">Aleatória</option>
+            <option>Humano</option><option>Elfo</option><option>Anão</option>
+            <option>Halfling</option><option>Draconato</option><option>Gnomo</option>
+            <option>Meio-Elfo</option><option>Meio-Orc</option><option>Tiefling</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>CLASSE</label>
+          <select id="classe">
+            <option value="">Aleatória</option>
+            <option>Bárbaro</option><option>Bardo</option><option>Clérigo</option>
+            <option>Druida</option><option>Guerreiro</option><option>Ladino</option>
+            <option>Mago</option><option>Monge</option><option>Paladino</option>
+            <option>Patrulheiro</option><option>Feiticeiro</option><option>Bruxo</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>NÍVEL</label>
+          <select id="nivel">
+            <option value="1">1</option><option value="3">3</option>
+            <option value="5">5</option><option value="10">10</option>
+            <option value="15">15</option><option value="20">20</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>TENDÊNCIA</label>
+          <select id="tendencia">
+            <option value="">Qualquer</option>
+            <option>Leal e Bom</option><option>Neutro e Bom</option><option>Caótico e Bom</option>
+            <option>Leal e Neutro</option><option>Neutro</option><option>Caótico e Neutro</option>
+            <option>Leal e Mau</option><option>Neutro e Mau</option><option>Caótico e Mau</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>CONCEITO (OPCIONAL)</label>
+          <input type="text" id="conceito" placeholder="Ex: elfo exilado que busca vingança..." />
+        </div>
+        <button class="btn-gold" onclick="gerarFicha()">⚔ GERAR PERSONAGEM</button>
+      </div>
+
+      <div class="save-row" id="save-row" style="display:none!important">
+        <button class="btn-outline" onclick="copiarFicha()">📋 Copiar</button>
+        <button class="btn-gold" onclick="salvarFicha()">💾 Salvar</button>
+      </div>
+    </div>
+
+    <!-- Result Panel -->
+    <div class="ficha-result" id="ficha-result">
+      <div class="empty-state">
+        <div class="icon">🎲</div>
+        <p>Configure os parâmetros e clique em<br><strong>Gerar Personagem</strong></p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  let fichaAtual = null;
+
+  firebase.auth().onAuthStateChanged(u => { if (!u) window.location.href = '/login'; });
+
+  async function gerarFicha() {
+    const raca      = document.getElementById('raca').value || 'aleatória';
+    const classe    = document.getElementById('classe').value || 'aleatória';
+    const nivel     = document.getElementById('nivel').value;
+    const tend      = document.getElementById('tendencia').value || 'qualquer';
+    const conceito  = document.getElementById('conceito').value;
+
+    const box = document.getElementById('ficha-result');
+    box.classList.add('loading');
+    box.innerHTML = '';
+
+    const prompt = `Crie uma ficha de personagem D&D 5e completa em PT-BR com:
+Raça: ${raca} | Classe: ${classe} | Nível: ${nivel} | Tendência: ${tend}
+${conceito ? 'Conceito: ' + conceito : ''}
+
+Responda APENAS em JSON válido com esta estrutura:
+{
+  "nome": "Nome do Personagem",
+  "raca": "Raça",
+  "classe": "Classe",
+  "nivel": ${nivel},
+  "tendencia": "Tendência",
+  "atributos": {"FOR":0,"DES":0,"CON":0,"INT":0,"SAB":0,"CAR":0},
+  "pv": 0,
+  "ca": 0,
+  "iniciativa": 0,
+  "habilidades": ["lista de habilidades e proficiências"],
+  "equipamento": ["lista de equipamentos"],
+  "magias": ["lista de magias se aplicável, senão vazio"],
+  "historia": "Backstory de 2-3 frases",
+  "personalidade": "Traços de personalidade",
+  "objetivo": "Ideal e objetivo do personagem"
+}`;
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+      const data = await res.json();
+      const text = data.content.map(i => i.text || '').join('');
+      const clean = text.replace(/```json|```/g, '').trim();
+      fichaAtual = JSON.parse(clean);
+      renderFicha(fichaAtual);
+      document.getElementById('save-row').style.setProperty('display', 'flex', 'important');
+    } catch(e) {
+      box.innerHTML = `<div class="empty-state"><div class="icon">⚠</div><p>Erro ao gerar personagem.<br>Verifique sua conexão.</p></div>`;
+    } finally {
+      box.classList.remove('loading');
+    }
+  }
+
+  function renderFicha(f) {
+    const box = document.getElementById('ficha-result');
+    const attrs = ['FOR','DES','CON','INT','SAB','CAR'];
+    box.innerHTML = `
+      <div class="ficha-block">
+        <h4>Identidade</h4>
+        <p><strong style="color:var(--gold);font-family:'Cinzel',serif;font-size:1.2rem">${f.nome}</strong></p>
+        <p>${f.raca} • ${f.classe} • Nível ${f.nivel} • ${f.tendencia}</p>
+      </div>
+      <div class="ficha-block">
+        <h4>Atributos</h4>
+        <div class="attrs-grid">
+          ${attrs.map(a=>`<div class="attr-box"><div class="val">${f.atributos[a]}</div><div class="lbl">${a}</div></div>`).join('')}
+        </div>
+      </div>
+      <div class="ficha-block">
+        <h4>Combate</h4>
+        <p>❤ PV: <strong>${f.pv}</strong> &nbsp; 🛡 CA: <strong>${f.ca}</strong> &nbsp; ⚡ Iniciativa: <strong>${f.iniciativa > 0 ? '+' : ''}${f.iniciativa}</strong></p>
+      </div>
+      ${f.magias?.length ? `<div class="ficha-block"><h4>Magias</h4><p>${f.magias.slice(0,6).join(' • ')}</p></div>` : ''}
+      <div class="ficha-block">
+        <h4>Equipamento</h4>
+        <p>${f.equipamento.join(' • ')}</p>
+      </div>
+      <div class="ficha-block">
+        <h4>Habilidades</h4>
+        <p>${f.habilidades.join(' • ')}</p>
+      </div>
+      <div class="ficha-block">
+        <h4>História</h4>
+        <p>${f.historia}</p>
+      </div>
+      <div class="ficha-block">
+        <h4>Personalidade & Objetivo</h4>
+        <p>${f.personalidade}<br><em>${f.objetivo}</em></p>
+      </div>`;
+  }
+
+  async function salvarFicha() {
+    if (!fichaAtual) return;
+    const u = firebase.auth().currentUser;
+    if (!u) return showToast('Faça login para salvar', 'error');
+    try {
+      await firebase.firestore().collection('fichas').add({
+        ...fichaAtual, uid: u.uid, criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      showToast('Ficha salva com sucesso!');
+    } catch(e) { showToast('Erro ao salvar', 'error'); }
+  }
+
+  function copiarFicha() {
+    if (!fichaAtual) return;
+    navigator.clipboard.writeText(JSON.stringify(fichaAtual, null, 2));
+    showToast('Ficha copiada!');
+  }
+</script>
+{% endblock %}

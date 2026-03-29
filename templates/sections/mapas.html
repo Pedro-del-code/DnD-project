@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% block title %}Mapas — The Legend of D&D{% endblock %}
+{% block nav %}{% include "nav.html" %}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .mapas-wrap { padding: 1.5rem 2rem; max-width: 1300px; margin: 0 auto; }
+
+  .map-categories {
+    display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap;
+  }
+
+  .map-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .map-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden;
+    cursor: pointer; transition: all 0.25s;
+  }
+  .map-card:hover { border-color: var(--border-h); box-shadow: var(--shadow-gold); transform: translateY(-3px); }
+
+  .map-thumb {
+    height: 160px;
+    background: linear-gradient(135deg, #1a1206 0%, #0d0903 100%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 4rem; border-bottom: 1px solid var(--border);
+    position: relative; overflow: hidden;
+  }
+  .map-thumb::after {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center, rgba(201,168,76,0.05) 0%, transparent 70%);
+  }
+
+  .map-info { padding: 1rem 1.25rem; }
+  .map-title {
+    font-family: 'Cinzel', serif; font-size: 0.95rem; color: var(--gold);
+    margin-bottom: 0.25rem;
+  }
+  .map-meta { font-size: 0.82rem; color: var(--text-dim); font-style: italic; }
+  .map-tags { margin-top: 0.5rem; display: flex; gap: 0.35rem; flex-wrap: wrap; }
+  .map-tag {
+    font-size: 0.68rem; font-family: 'Cinzel', serif;
+    color: var(--text-dim); border: 1px solid var(--border);
+    padding: 0.15rem 0.5rem; border-radius: 3px;
+  }
+
+  .map-footer { padding: 0.75rem 1.25rem; border-top: 1px solid var(--border); display: flex; gap: 0.5rem; }
+  .map-footer button { flex: 1; font-size: 0.75rem; padding: 0.45rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="section-header">
+    <h1>🗺 Mapas</h1>
+    <p>Masmorras, cidades, florestas e regiões para suas aventuras</p>
+  </div>
+
+  <div class="mapas-wrap">
+    <div class="map-categories">
+      <button class="btn-gold" style="font-size:0.78rem;padding:0.5rem 1rem">Todos</button>
+      <button class="btn-outline" style="font-size:0.78rem;padding:0.5rem 1rem">Masmorras</button>
+      <button class="btn-outline" style="font-size:0.78rem;padding:0.5rem 1rem">Cidades</button>
+      <button class="btn-outline" style="font-size:0.78rem;padding:0.5rem 1rem">Florestas</button>
+      <button class="btn-outline" style="font-size:0.78rem;padding:0.5rem 1rem">Cavernas</button>
+      <button class="btn-outline" style="font-size:0.78rem;padding:0.5rem 1rem">Mundo</button>
+    </div>
+
+    <div class="map-grid">
+      <!-- Masmorras -->
+      <div class="map-card">
+        <div class="map-thumb">🏰</div>
+        <div class="map-info">
+          <div class="map-title">Masmorra de Underhall</div>
+          <div class="map-meta">5 andares • 30 salas • CR 5-10</div>
+          <div class="map-tags">
+            <span class="map-tag">Masmorra</span>
+            <span class="map-tag">Médio</span>
+            <span class="map-tag">Boss Final</span>
+          </div>
+        </div>
+        <div class="map-footer">
+          <button class="btn-outline">👁 Ver</button>
+          <button class="btn-gold">📥 Usar</button>
+        </div>
+      </div>
+
+      <div class="map-card">
+        <div class="map-thumb">🌲</div>
+        <div class="map-info">
+          <div class="map-title">Floresta de Mirewood</div>
+          <div class="map-meta">Região • Hexcrawl • CR 1-5</div>
+          <div class="map-tags">
+            <span class="map-tag">Floresta</span>
+            <span class="map-tag">Exploração</span>
+          </div>
+        </div>
+        <div class="map-footer">
+          <button class="btn-outline">👁 Ver</button>
+          <button class="btn-gold">📥 Usar</button>
+        </div>
+      </div>
+
+      <div class="map-card">
+        <div class="map-thumb">🏙</div>
+        <div class="map-info">
+          <div class="map-title">Cidade de Ironhaven</div>
+          <div class="map-meta">Cidade mercantil • 12 distritos</div>
+          <div class="map-tags">
+            <span class="map-tag">Cidade</span>
+            <span class="map-tag">Intriga</span>
+            <span class="map-tag">Social</span>
+          </div>
+        </div>
+        <div class="map-footer">
+          <button class="btn-outline">👁 Ver</button>
+          <button class="btn-gold">📥 Usar</button>
+        </div>
+      </div>
+
+      <div class="map-card">
+        <div class="map-thumb">⛰</div>
+        <div class="map-info">
+          <div class="map-title">Cavernas de Kradum</div>
+          <div class="map-meta">Caverna • 8 câmaras • CR 8-14</div>
+          <div class="map-tags">
+            <span class="map-tag">Caverna</span>
+            <span class="map-tag">Difícil</span>
+          </div>
+        </div>
+        <div class="map-footer">
+          <button class="btn-outline">👁 Ver</button>
+          <button class="btn-gold">📥 Usar</button>
+        </div>
+      </div>
+
+      <div class="map-card">
+        <div class="map-thumb">🌍</div>
+        <div class="map-info">
+          <div class="map-title">Continente de Aethoria</div>
+          <div class="map-meta">Mapa mundial • 7 reinos</div>
+          <div class="map-tags">
+            <span class="map-tag">Mundo</span>
+            <span class="map-tag">Campanha</span>
+          </div>
+        </div>
+        <div class="map-footer">
+          <button class="btn-outline">👁 Ver</button>
+          <button class="btn-gold">📥 Usar</button>
+        </div>
+      </div>
+
+      <!-- Upload card -->
+      <div class="map-card" style="border-style:dashed;cursor:default">
+        <div class="map-thumb" style="font-size:2.5rem;flex-direction:column;gap:0.5rem">
+          <span>➕</span>
+        </div>
+        <div class="map-info" style="text-align:center">
+          <div class="map-title" style="color:var(--text-dim)">Enviar Mapa</div>
+          <div class="map-meta">Faça upload do seu mapa</div>
+        </div>
+        <div class="map-footer">
+          <button class="btn-gold" style="width:100%" onclick="document.getElementById('map-upload').click()">📤 Upload</button>
+          <input type="file" id="map-upload" accept="image/*" style="display:none" onchange="uploadMapa(this)" />
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  firebase.auth().onAuthStateChanged(u => { if (!u) window.location.href = '/login'; });
+
+  function uploadMapa(input) {
+    if (!input.files[0]) return;
+    showToast('Sistema de upload em breve!');
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% block title %}NPCs & Bosses — The Legend of D&D{% endblock %}
+{% block nav %}{% include "nav.html" %}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .npcs-layout {
+    display: grid; grid-template-columns: 280px 1fr;
+    gap: 1.5rem; padding: 1.5rem 2rem;
+    max-width: 1300px; margin: 0 auto;
+  }
+
+  .filter-panel .card { margin-bottom: 0.75rem; }
+  .filter-panel h3 {
+    font-family: 'Cinzel', serif; font-size: 0.78rem;
+    color: var(--gold-dark); letter-spacing: 0.1em;
+    margin-bottom: 0.75rem;
+  }
+
+  .tag-list { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .tag {
+    font-family: 'Cinzel', serif; font-size: 0.7rem;
+    padding: 0.3rem 0.7rem; border-radius: 4px;
+    border: 1px solid var(--border);
+    color: var(--text-dim); cursor: pointer; transition: all 0.2s;
+  }
+  .tag:hover, .tag.active {
+    color: var(--gold); border-color: var(--border-h);
+    background: rgba(201,168,76,0.08);
+  }
+
+  .npc-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+
+  .npc-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden;
+    transition: all 0.25s; cursor: pointer;
+  }
+  .npc-card:hover { border-color: var(--border-h); box-shadow: var(--shadow-gold); transform: translateY(-2px); }
+
+  .npc-card-header {
+    padding: 1rem 1.25rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: flex-start;
+  }
+  .npc-name {
+    font-family: 'Cinzel', serif; font-size: 0.95rem; font-weight: 600;
+    color: var(--gold); margin-bottom: 0.2rem;
+  }
+  .npc-type { font-size: 0.82rem; color: var(--text-dim); font-style: italic; }
+  .cr-badge {
+    font-family: 'Cinzel', serif; font-size: 0.75rem;
+    color: var(--bg-black); background: var(--gold);
+    padding: 0.2rem 0.55rem; border-radius: 4px;
+    font-weight: 700; white-space: nowrap;
+  }
+  .cr-badge.boss { background: var(--red-blood); color: #ffd0d0; }
+
+  .npc-card-body { padding: 0.9rem 1.25rem; }
+  .npc-stat-row {
+    display: flex; gap: 1rem; margin-bottom: 0.5rem;
+    font-size: 0.82rem; color: var(--text-dim);
+  }
+  .npc-stat-row span strong { color: var(--text-parch); }
+  .npc-desc { font-size: 0.88rem; color: var(--text-dim); line-height: 1.5; font-style: italic; }
+
+  .npc-actions { padding: 0.75rem 1.25rem; border-top: 1px solid var(--border); display: flex; gap: 0.5rem; }
+  .npc-actions button { flex: 1; font-size: 0.75rem; padding: 0.45rem 0.75rem; }
+
+  .generate-bar {
+    display: flex; gap: 0.75rem; margin-bottom: 1.25rem; flex-wrap: wrap;
+  }
+  .generate-bar input { flex: 1; min-width: 200px; }
+  .generate-bar button { white-space: nowrap; }
+
+  @media (max-width: 900px) {
+    .npcs-layout { grid-template-columns: 1fr; padding: 1rem; }
+    .filter-panel { display: none; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="section-header">
+    <h1>👥 NPCs, Bosses & Monstros</h1>
+    <p>Banco de criaturas prontas para suas campanhas</p>
+  </div>
+
+  <div class="npcs-layout">
+    <!-- Filters -->
+    <div class="filter-panel">
+      <div class="card">
+        <h3>TIPO</h3>
+        <div class="tag-list">
+          <span class="tag active" onclick="filterTag(this,'tipo','')">Todos</span>
+          <span class="tag" onclick="filterTag(this,'tipo','npc')">NPCs</span>
+          <span class="tag" onclick="filterTag(this,'tipo','boss')">Bosses</span>
+          <span class="tag" onclick="filterTag(this,'tipo','monstro')">Monstros</span>
+        </div>
+      </div>
+      <div class="card">
+        <h3>NÍVEL DE DESAFIO</h3>
+        <div class="tag-list">
+          <span class="tag active" onclick="filterTag(this,'cr','')">Qualquer</span>
+          <span class="tag" onclick="filterTag(this,'cr','facil')">Fácil (CR 1-4)</span>
+          <span class="tag" onclick="filterTag(this,'cr','medio')">Médio (CR 5-10)</span>
+          <span class="tag" onclick="filterTag(this,'cr','dificil')">Difícil (CR 11-20)</span>
+          <span class="tag" onclick="filterTag(this,'cr','lendario')">Lendário (CR 20+)</span>
+        </div>
+      </div>
+      <button class="btn-gold" onclick="gerarNPC()" style="width:100%">✨ Gerar NPC com IA</button>
+    </div>
+
+    <!-- Grid -->
+    <div>
+      <div class="generate-bar">
+        <input type="text" id="npc-prompt" placeholder="Descreva um NPC (ex: mago humano vilão com cicatriz...)" />
+        <button class="btn-gold" onclick="gerarNPC()">⚔ Gerar</button>
+      </div>
+
+      <div class="npc-grid" id="npc-grid">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  firebase.auth().onAuthStateChanged(u => { if (!u) window.location.href = '/login'; });
+
+  const defaultNPCs = [
+    { nome:'Thorin, o Ferreiro', tipo:'NPC', cr:'1/2', pv:22, ca:13, desc:'Anão robusto e taciturno que guarda segredos da cidade antiga.', tags:['npc'] },
+    { nome:'Zara das Sombras', tipo:'NPC', cr:'3', pv:45, ca:15, desc:'Ladra élfica com código de honra próprio e passado misterioso.', tags:['npc'] },
+    { nome:'Valak, o Devorador', tipo:'Boss', cr:'18', pv:350, ca:19, desc:'Dracoliche ancião que coleciona almas dos que ousam desafiá-lo.', tags:['boss'], isBoss:true },
+    { nome:'Kran, o Chicote', tipo:'Boss', cr:'12', pv:190, ca:17, desc:'Guerreiro hobgoblin general que nunca perdeu uma batalha.', tags:['boss'], isBoss:true },
+    { nome:'Goblin Explorador', tipo:'Monstro', cr:'1/4', pv:7, ca:13, desc:'Batedores ágeis das hordas goblinoides, letais em grupo.', tags:['monstro'] },
+    { nome:'Troll das Pedras', tipo:'Monstro', cr:'5', pv:84, ca:15, desc:'Regeneração assustadora torna esse ser quase imparável.', tags:['monstro'] },
+  ];
+
+  function renderGrid(npcs) {
+    const grid = document.getElementById('npc-grid');
+    grid.innerHTML = npcs.map(n => `
+      <div class="npc-card">
+        <div class="npc-card-header">
+          <div>
+            <div class="npc-name">${n.nome}</div>
+            <div class="npc-type">${n.tipo}</div>
+          </div>
+          <span class="cr-badge ${n.isBoss?'boss':''}">CR ${n.cr}</span>
+        </div>
+        <div class="npc-card-body">
+          <div class="npc-stat-row">
+            <span>❤ <strong>${n.pv}</strong> PV</span>
+            <span>🛡 <strong>${n.ca}</strong> CA</span>
+          </div>
+          <p class="npc-desc">${n.desc}</p>
+        </div>
+        <div class="npc-actions">
+          <button class="btn-outline" onclick="salvarNPC(${JSON.stringify(n).replace(/"/g,'&quot;')})">💾 Salvar</button>
+          <button class="btn-gold">Ver Detalhes</button>
+        </div>
+      </div>`).join('');
+  }
+
+  renderGrid(defaultNPCs);
+
+  function filterTag(el, group, val) {
+    document.querySelectorAll(`.tag`).forEach(t => { if(t.onclick?.toString().includes(group)) t.classList.remove('active'); });
+    el.classList.add('active');
+    const filtered = val ? defaultNPCs.filter(n => n.tags.includes(val)) : defaultNPCs;
+    renderGrid(filtered);
+  }
+
+  async function gerarNPC() {
+    const prompt = document.getElementById('npc-prompt').value || 'NPC interessante para D&D 5e';
+    showToast('Gerando NPC...');
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514', max_tokens: 1000,
+        messages: [{ role:'user', content:`Crie um NPC/monstro D&D 5e para: "${prompt}". Responda APENAS em JSON:
+{"nome":"","tipo":"NPC|Boss|Monstro","cr":"","pv":0,"ca":0,"desc":"descrição curta","tags":["npc|boss|monstro"],"isBoss":false}` }]
+      })
+    });
+    const data = await res.json();
+    const txt = data.content.map(i=>i.text||'').join('').replace(/```json|```/g,'').trim();
+    try {
+      const npc = JSON.parse(txt);
+      renderGrid([npc, ...defaultNPCs]);
+      showToast('NPC gerado!');
+    } catch(e) { showToast('Erro ao gerar', 'error'); }
+  }
+
+  async function salvarNPC(npc) {
+    const u = firebase.auth().currentUser;
+    if (!u) return showToast('Faça login para salvar', 'error');
+    await firebase.firestore().collection('npcs').add({ ...npc, uid: u.uid });
+    showToast('NPC salvo!');
+  }
+</script>
+{% endblock %}

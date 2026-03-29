@@ -127,9 +127,7 @@ if __name__ == '__main__':
 # ─── Groq API Proxy ───────────────────────────────────────────
 @app.route('/api/gerar-ficha', methods=['POST'])
 def api_gerar_ficha():
-    import urllib.request
-    import urllib.error
-    import json as pyjson
+    import requests as req_lib
 
     api_key = os.environ.get('GROQ_API_KEY')
     if not api_key:
@@ -140,31 +138,23 @@ def api_gerar_ficha():
     if not prompt:
         return jsonify({'error': 'Prompt ausente'}), 400
 
-    payload = pyjson.dumps({
-        'model': 'llama-3.3-70b-versatile',
-        'max_tokens': 1500,
-        'messages': [{'role': 'user', 'content': prompt}]
-    }).encode('utf-8')
-
-    req = urllib.request.Request(
-        'https://api.groq.com/openai/v1/chat/completions',
-        data=payload,
-        headers={
-            'Content-Type': 'application/json',
-            'Authorization': f'Bearer {api_key}',
-        },
-        method='POST'
-    )
-
     try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            result = pyjson.loads(resp.read())
-            text = result['choices'][0]['message']['content']
-            return jsonify({'choices': [{'message': {'content': text}}]})
-    except urllib.error.HTTPError as e:
-        body = e.read().decode('utf-8')
-        print(f"Groq HTTP error {e.code}: {body}")
-        return jsonify({'error': f'Groq error {e.code}: {body}'}), 500
+        r = req_lib.post(
+            'https://api.groq.com/openai/v1/chat/completions',
+            headers={
+                'Authorization': f'Bearer {api_key}',
+                'Content-Type': 'application/json',
+            },
+            json={
+                'model': 'llama-3.3-70b-versatile',
+                'max_tokens': 1500,
+                'messages': [{'role': 'user', 'content': prompt}]
+            },
+            timeout=30
+        )
+        r.raise_for_status()
+        text = r.json()['choices'][0]['message']['content']
+        return jsonify({'choices': [{'message': {'content': text}}]})
     except Exception as e:
-        print(f"Groq exception: {e}")
+        print(f"Groq error: {e}")
         return jsonify({'error': str(e)}), 500

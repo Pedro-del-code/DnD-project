@@ -129,6 +129,20 @@ if __name__ == '__main__':
 def api_gerar_ficha():
     import requests as req_lib
 
+    # ── Verifica acesso pago ──
+    if FIREBASE_ADMIN_ENABLED:
+        token = request.cookies.get('fb_token')
+        if not token:
+            return jsonify({'error': 'sem_acesso', 'redirect': '/planos'}), 403
+        try:
+            decoded = fb_auth.verify_id_token(token)
+            uid = decoded['uid']
+            doc = db.collection('usuarios').document(uid).get()
+            if not doc.exists or not doc.to_dict().get('ficha_ativa', False):
+                return jsonify({'error': 'sem_acesso', 'redirect': '/planos'}), 403
+        except Exception:
+            return jsonify({'error': 'sem_acesso', 'redirect': '/planos'}), 403
+
     api_key = os.environ.get('GROQ_API_KEY')
     if not api_key:
         return jsonify({'error': 'GROQ_API_KEY não configurada'}), 500

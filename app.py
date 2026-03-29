@@ -128,8 +128,9 @@ if __name__ == '__main__':
 @app.route('/api/gerar-ficha', methods=['POST'])
 def api_gerar_ficha():
     import requests as req_lib
+    from datetime import datetime, timezone
 
-    # ── Verifica acesso pago ──
+    # ── Verifica acesso pago e expiração ──
     if FIREBASE_ADMIN_ENABLED:
         token = request.cookies.get('fb_token')
         if not token:
@@ -138,9 +139,26 @@ def api_gerar_ficha():
             decoded = fb_auth.verify_id_token(token)
             uid = decoded['uid']
             doc = db.collection('usuarios').document(uid).get()
-            if not doc.exists or not doc.to_dict().get('ficha_ativa', False):
+            if not doc.exists:
                 return jsonify({'error': 'sem_acesso', 'redirect': '/planos'}), 403
-        except Exception:
+            dados = doc.to_dict()
+            # Verifica se tem acesso ativo
+            if not dados.get('ficha_ativa', False):
+                return jsonify({'error': 'sem_acesso', 'redirect': '/planos'}), 403
+            # Verifica expiração
+            expira_em = dados.get('expira_em')
+            if expira_em:
+                agora = datetime.now(timezone.utc)
+                if hasattr(expira_em, 'timestamp'):
+                    expira_dt = expira_em.replace(tzinfo=timezone.utc) if expira_em.tzinfo is None else expira_em
+                else:
+                    expira_dt = datetime.fromtimestamp(expira_em, tz=timezone.utc)
+                if agora > expira_dt:
+                    # Expirou — desativa automaticamente
+                    db.collection('usuarios').document(uid).update({'ficha_ativa': False})
+                    return jsonify({'error': 'sem_acesso', 'redirect': '/planos'}), 403
+        except Exception as e:
+            print(f'Auth error: {e}')
             return jsonify({'error': 'sem_acesso', 'redirect': '/planos'}), 403
 
     api_key = os.environ.get('GROQ_API_KEY')
@@ -231,27 +249,47 @@ def admin_api_usuarios():
 @app.route('/admin/api/toggle-acesso', methods=['POST'])
 @admin_required
 def admin_api_toggle():
+    from datetime import datetime, timezone, timedelta
     if not FIREBASE_ADMIN_ENABLED:
         return jsonify({'ok': False, 'error': 'Firebase não disponível'}), 500
     data = request.get_json()
     uid = data.get('uid')
     ficha_ativa = data.get('ficha_ativa', False)
+    plano = data.get('plano')
     if not uid:
         return jsonify({'ok': False, 'error': 'UID ausente'}), 400
-    db.collection('usuarios').document(uid).set({'ficha_ativa': ficha_ativa}, merge=True)
+
+    doc_data = {'ficha_ativa': ficha_ativa}
+    if ficha_ativa and plano:
+        dias = {'mensal': 30, 'bimestral': 60, 'semestral': 180}.get(plano, 30)
+        doc_data['expira_em'] = datetime.now(timezone.utc) + timedelta(days=dias)
+        doc_data['plano'] = plano
+    elif not ficha_ativa:
+        doc_data['expira_em'] = None
+
+    db.collection('usuarios').document(uid).set(doc_data, merge=True)
     return jsonify({'ok': True})
 
 @app.route('/admin/api/adicionar-usuario', methods=['POST'])
 @admin_required
 def admin_api_adicionar():
+    from datetime import datetime, timezone, timedelta
     if not FIREBASE_ADMIN_ENABLED:
         return jsonify({'ok': False, 'error': 'Firebase não disponível'}), 500
     data = request.get_json()
     uid = data.get('uid', '').strip()
+    plano = data.get('plano', 'inativo')
     if not uid:
         return jsonify({'ok': False, 'error': 'UID ausente'}), 400
-    doc_data = {'ficha_ativa': data.get('ficha_ativa', False)}
+
+    ficha_ativa = plano != 'inativo'
+    doc_data = {'ficha_ativa': ficha_ativa}
     if data.get('nome'):  doc_data['nome']  = data['nome']
     if data.get('email'): doc_data['email'] = data['email']
+    if ficha_ativa:
+        dias = {'mensal': 30, 'bimestral': 60, 'semestral': 180}.get(plano, 30)
+        doc_data['expira_em'] = datetime.now(timezone.utc) + timedelta(days=dias)
+        doc_data['plano'] = plano
+
     db.collection('usuarios').document(uid).set(doc_data, merge=True)
     return jsonify({'ok': True})

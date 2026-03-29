@@ -277,6 +277,13 @@ Responda APENAS JSON puro, sem markdown:
       body: JSON.stringify({ prompt })
     });
     const data = await res.json();
+
+    // Sem acesso pago → redireciona para planos
+    if (res.status === 403 && data.error === 'sem_acesso') {
+      window.location.href = '/planos';
+      return;
+    }
+
     // Suporta formato Groq e formato Anthropic
     let txt;
     if (data.choices) {

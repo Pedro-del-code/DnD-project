@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block title %}Guilda — The Legend of D&D{% endblock %}
+
+{% block nav %}{% include "nav.html" %}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .hero-banner {
+    position: relative;
+    height: 280px;
+    overflow: hidden;
+    border-bottom: 1px solid var(--border);
+  }
+  .hero-banner img {
+    width: 100%; height: 100%;
+    object-fit: cover; object-position: center 30%;
+    filter: brightness(0.45) saturate(0.7);
+  }
+  .hero-banner::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(to top, var(--bg-black) 0%, transparent 60%);
+  }
+  .hero-text {
+    position: absolute; bottom: 2rem; left: 2rem; z-index: 2;
+  }
+  .hero-text h2 {
+    font-family: 'Cinzel', serif; font-size: 2rem; font-weight: 900;
+    color: var(--gold);
+    text-shadow: 0 0 30px rgba(201,168,76,0.5);
+  }
+  .hero-text p { color: var(--text-dim); font-style: italic; font-size: 1.05rem; }
+
+  .dash-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.25rem;
+    padding: 2rem;
+    max-width: 1200px; margin: 0 auto;
+  }
+
+  .dash-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.75rem 1.5rem;
+    text-decoration: none;
+    display: block;
+    transition: all 0.25s;
+    position: relative; overflow: hidden;
+  }
+  .dash-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    opacity: 0; transition: opacity 0.3s;
+  }
+  .dash-card:hover { border-color: var(--border-h); box-shadow: var(--shadow-gold); transform: translateY(-3px); }
+  .dash-card:hover::before { opacity: 1; }
+
+  .dash-card .icon { font-size: 2rem; margin-bottom: 0.75rem; }
+  .dash-card h3 {
+    font-family: 'Cinzel', serif; font-size: 1rem; font-weight: 600;
+    color: var(--gold); letter-spacing: 0.06em;
+    margin-bottom: 0.4rem;
+  }
+  .dash-card p { color: var(--text-dim); font-size: 0.9rem; line-height: 1.5; }
+
+  .stats-row {
+    display: flex; gap: 1rem;
+    padding: 0 2rem 0;
+    max-width: 1200px; margin: 0 auto;
+    flex-wrap: wrap;
+  }
+  .stat-chip {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem 1.25rem;
+    font-family: 'Cinzel', serif;
+  }
+  .stat-chip .num { font-size: 1.5rem; color: var(--gold); font-weight: 900; display: block; }
+  .stat-chip .lbl { font-size: 0.7rem; color: var(--text-dim); letter-spacing: 0.1em; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="hero-banner">
+    <img src="/static/images/dragon-bg.jpg" alt="Dragon" onerror="this.style.background='linear-gradient(135deg, #1a1206, #0a0804)'" />
+    <div class="hero-text">
+      <h2>Bem-vindo, <span id="hero-name">Aventureiro</span></h2>
+      <p>O que buscas nas masmorras hoje?</p>
+    </div>
+  </div>
+
+  <div class="stats-row" style="margin-top:1.5rem">
+    <div class="stat-chip"><span class="num" id="stat-fichas">—</span><span class="lbl">FICHAS CRIADAS</span></div>
+    <div class="stat-chip"><span class="num" id="stat-npcs">—</span><span class="lbl">NPCS SALVOS</span></div>
+    <div class="stat-chip"><span class="num" id="stat-mapas">—</span><span class="lbl">MAPAS</span></div>
+  </div>
+
+  <div class="dash-grid" style="margin-top:1rem">
+    <a href="/auto-ficha" class="dash-card">
+      <div class="icon">📜</div>
+      <h3>Auto Ficha</h3>
+      <p>Crie fichas de personagem D&D 5e completas automaticamente com IA</p>
+    </a>
+    <a href="/npcs" class="dash-card">
+      <div class="icon">👥</div>
+      <h3>NPCs & Bosses</h3>
+      <p>Banco completo de NPCs, bosses e monstros prontos para usar</p>
+    </a>
+    <a href="/mapas" class="dash-card">
+      <div class="icon">🗺</div>
+      <h3>Mapas</h3>
+      <p>Mapas de masmorras, cidades e regiões para sua campanha</p>
+    </a>
+    <a href="/loja" class="dash-card">
+      <div class="icon">🏪</div>
+      <h3>Loja de Fichas</h3>
+      <p>Compre e venda fichas prontas criadas pela comunidade</p>
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  firebase.auth().onAuthStateChanged(u => {
+    if (!u) return window.location.href = '/login';
+    document.getElementById('hero-name').textContent = u.displayName || u.email.split('@')[0];
+
+    // Load stats from Firestore
+    const db = firebase.firestore();
+    db.collection('fichas').where('uid','==',u.uid).get()
+      .then(s => document.getElementById('stat-fichas').textContent = s.size).catch(()=>{});
+    db.collection('npcs').where('uid','==',u.uid).get()
+      .then(s => document.getElementById('stat-npcs').textContent = s.size).catch(()=>{});
+    db.collection('mapas').where('uid','==',u.uid).get()
+      .then(s => document.getElementById('stat-mapas').textContent = s.size).catch(()=>{});
+  });
+</script>
+{% endblock %}

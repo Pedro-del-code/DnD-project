@@ -127,9 +127,6 @@ if __name__ == '__main__':
 # ─── Groq API Proxy ───────────────────────────────────────────
 @app.route('/api/gerar-ficha', methods=['POST'])
 def api_gerar_ficha():
-    import urllib.request
-    import json as pyjson
-
     api_key = os.environ.get('GROQ_API_KEY')
     if not api_key:
         return jsonify({'error': 'GROQ_API_KEY não configurada'}), 500
@@ -139,30 +136,16 @@ def api_gerar_ficha():
     if not prompt:
         return jsonify({'error': 'Prompt ausente'}), 400
 
-    payload = pyjson.dumps({
-        'model': 'llama-3.3-70b-versatile',
-        'max_tokens': 1500,
-        'messages': [{'role': 'user', 'content': prompt}]
-    }).encode('utf-8')
-
-    req = urllib.request.Request(
-        'https://api.groq.com/openai/v1/chat/completions',
-        data=payload,
-        headers={
-            'Content-Type': 'application/json',
-            'Authorization': f'Bearer {api_key}'
-        },
-        method='POST'
-    )
-
     try:
-        with urllib.request.urlopen(req) as resp:
-            result = pyjson.loads(resp.read())
-            return jsonify(result)
-    except urllib.error.HTTPError as e:
-        body = e.read().decode('utf-8')
-        print(f"Groq HTTP error {e.code}: {body}")
-        return jsonify({'error': f'Groq error {e.code}: {body}'}), 500
+        from groq import Groq
+        client = Groq(api_key=api_key)
+        completion = client.chat.completions.create(
+            model='llama-3.3-70b-versatile',
+            max_tokens=1500,
+            messages=[{'role': 'user', 'content': prompt}]
+        )
+        text = completion.choices[0].message.content
+        return jsonify({'choices': [{'message': {'content': text}}]})
     except Exception as e:
         print(f"Groq exception: {e}")
         return jsonify({'error': str(e)}), 500
